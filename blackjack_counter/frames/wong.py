@@ -5,7 +5,7 @@
 # - The buttons for 2 through A add those fractional adjustments to the running count.
 # - We keep the low/high shortcuts so players can apply generic +1/-1 presses as needed.
 
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from typing import Dict, Iterable, TYPE_CHECKING
 
 from blackjack_counter.formatting import format_increment
@@ -34,6 +34,7 @@ class WongHalvesFrame(BaseModeFrame):
         "A": -1.0,
     }
 
+    # Keep the codex key layout + Hotkeys dialog
     CARD_KEY_BINDINGS: Dict[str, Iterable[str]] = {
         "2": ("q",),
         "3": ("w",),
@@ -43,11 +44,11 @@ class WongHalvesFrame(BaseModeFrame):
         "7": ("s",),
         "8": ("d",),
         "9": ("f",),
-        "10": ("h",),
-        "J": ("j",),
-        "Q": ("k",),
-        "K": ("l",),
-        "A": ("g",),
+        "10": ("g",),
+        "J": ("z",),
+        "Q": ("x",),
+        "K": ("c",),
+        "A": ("v",),
     }
 
     def __init__(self, master: ttk.Frame, controller: "CountingApp") -> None:
@@ -78,6 +79,8 @@ class WongHalvesFrame(BaseModeFrame):
         self.reset_button.pack(fill="x", pady=(0, 10))
         self.menu_button = ttk.Button(control_frame, text="Menu", command=self._go_menu)
         self.menu_button.pack(fill="x")
+        self.hotkey_button = ttk.Button(control_frame, text="Hotkeys…", command=self._show_hotkeys)
+        self.hotkey_button.pack(fill="x", pady=(10, 0))
 
         history_frame = ttk.Frame(top_panel, padding=(10, 0))
         history_frame.grid(row=0, column=1, sticky="nsew")
@@ -150,21 +153,15 @@ class WongHalvesFrame(BaseModeFrame):
 
     def _record_generic(self, label: str, value: float) -> None:
         """Record a quick +1/-1 adjustment alongside card-specific presses."""
-
         if not self.state:
             return
-        # Shares the same CountEntry pipeline as the card buttons so the history
-        # and running/true counts remain consistent across input methods.
         self.state.record(label, value)
         self.refresh()
 
     def _record_card(self, card: str, value: float) -> None:
         """Log the fractional Wong Halves value for the chosen card rank."""
-
         if not self.state:
             return
-        # Each button uses the CARD_VALUES table above. BaseModeFrame.refresh()
-        # sums those values to produce the running and true counts displayed.
         self.state.record(card, value)
         self.refresh()
 
@@ -175,25 +172,12 @@ class WongHalvesFrame(BaseModeFrame):
             def handler(event):
                 self._record_generic(label, value)
                 return "break"
-
             return handler
 
-        for sequence in (
-            "<KeyPress-a>",
-            "<KeyPress-A>",
-            "<KeyPress-minus>",
-            "<minus>",
-            "<Left>",
-        ):
+        for sequence in ("<KeyPress-a>", "<KeyPress-A>", "<KeyPress-minus>", "<minus>", "<Left>"):
             self._bind_shortcut(sequence, _wrap_generic("Low", 1.0))
 
-        for sequence in (
-            "<KeyPress-d>",
-            "<KeyPress-D>",
-            "<KeyPress-plus>",
-            "<plus>",
-            "<Right>",
-        ):
+        for sequence in ("<KeyPress-d>", "<KeyPress-D>", "<KeyPress-plus>", "<plus>", "<Right>"):
             self._bind_shortcut(sequence, _wrap_generic("Hi", -1.0))
 
         for card, keys in self.CARD_KEY_BINDINGS.items():
@@ -203,7 +187,6 @@ class WongHalvesFrame(BaseModeFrame):
                 def handler(event):
                     self._record_card(c, v)
                     return "break"
-
                 return handler
 
             handler = _make_handler(card, value)
@@ -216,3 +199,20 @@ class WongHalvesFrame(BaseModeFrame):
 
     def on_hide(self) -> None:
         super().on_hide()
+
+    def _show_hotkeys(self) -> None:
+        """Display the key bindings for the Wong Halves layout."""
+        card_hints = [
+            "2: Q", "3: W", "4: E", "5: R",
+            "6: A", "7: S", "8: D", "9: F",
+            "10: G", "J: Z", "Q: X", "K: C", "A: V",
+        ]
+        hotkeys = (
+            "Low (+1): A, -, Left Arrow",
+            "Hi (-1): D, +, Right Arrow",
+            "Cards:\n  " + "\n  ".join(card_hints),
+            "Undo: <, ,, Ctrl+Z",
+            "Redo: >, ., Ctrl+Shift+Z",
+            "Reset Shoe: Ctrl+R",
+        )
+        messagebox.showinfo("Wong Halves Hotkeys", "\n\n".join(hotkeys), parent=self)
