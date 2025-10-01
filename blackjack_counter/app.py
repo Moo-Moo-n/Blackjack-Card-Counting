@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Dict
+from typing import Dict, Optional
 
 from blackjack_counter.frames.hilo import HiLoFrame
 from blackjack_counter.frames.menu import ModeSelection, StartMenu
@@ -27,6 +27,7 @@ class CountingApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames: Dict[str, ttk.Frame] = {}
+        self._current_frame: Optional[ttk.Frame] = None
         for frame_cls in (StartMenu, ModeSelection, HiLoFrame, WongHalvesFrame):
             frame = frame_cls(container, self)
             self.frames[frame_cls.__name__] = frame
@@ -44,9 +45,16 @@ class CountingApp(tk.Tk):
 
     def show_frame(self, name: str) -> None:
         frame = self.frames[name]
+
+        if self._current_frame is not None and hasattr(self._current_frame, "on_hide"):
+            self._current_frame.on_hide()  # type: ignore[call-arg]
+
+        frame.tkraise()
+
         if hasattr(frame, "on_show"):
             frame.on_show()  # type: ignore[call-arg]
-        frame.tkraise()
+
+        self._current_frame = frame
 
     def start_mode(self, frame_name: str, decks: float = 6.0) -> None:
         frame = self.frames[frame_name]
