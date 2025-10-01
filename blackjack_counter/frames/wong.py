@@ -5,8 +5,11 @@
 # - The buttons for 2 through A add those fractional adjustments to the running count.
 # - We keep the low/high shortcuts so players can apply generic +1/-1 presses as needed.
 
-from tkinter import messagebox, ttk
-from typing import Dict, Iterable, TYPE_CHECKING
+
+import tkinter as tk
+from tkinter import ttk
+from typing import Dict, Iterable, Optional, TYPE_CHECKING
+
 
 from blackjack_counter.formatting import format_increment
 from blackjack_counter.frames.base import BaseModeFrame
@@ -34,7 +37,7 @@ class WongHalvesFrame(BaseModeFrame):
         "A": -1.0,
     }
 
-    # Keep the codex key layout + Hotkeys dialog
+
     CARD_KEY_BINDINGS: Dict[str, Iterable[str]] = {
         "2": ("q",),
         "3": ("w",),
@@ -53,6 +56,8 @@ class WongHalvesFrame(BaseModeFrame):
 
     def __init__(self, master: ttk.Frame, controller: "CountingApp") -> None:
         super().__init__(master, controller)
+
+        self._hotkey_window: Optional[tk.Toplevel] = None
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=5)
@@ -101,7 +106,9 @@ class WongHalvesFrame(BaseModeFrame):
 
         self.low_button = ttk.Button(
             history_frame,
-            text="Low (+1) [A/-/←]",
+
+            text="Low (+1)",
+
             command=lambda: self._record_generic("Low", 1.0),
         )
         self.low_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
@@ -128,7 +135,9 @@ class WongHalvesFrame(BaseModeFrame):
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
         self.hi_button = ttk.Button(
             running_frame,
-            text="Hi (-1) [D/+/→]",
+
+            text="Hi (-1)",
+
             command=lambda: self._record_generic("Hi", -1.0),
         )
         self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
@@ -172,12 +181,27 @@ class WongHalvesFrame(BaseModeFrame):
             def handler(event):
                 self._record_generic(label, value)
                 return "break"
+
+
             return handler
 
-        for sequence in ("<KeyPress-a>", "<KeyPress-A>", "<KeyPress-minus>", "<minus>", "<Left>"):
+        for sequence in (
+            "<KeyPress-a>",
+            "<KeyPress-A>",
+            "<KeyPress-minus>",
+            "<minus>",
+            "<Left>",
+        ):
             self._bind_shortcut(sequence, _wrap_generic("Low", 1.0))
 
-        for sequence in ("<KeyPress-d>", "<KeyPress-D>", "<KeyPress-plus>", "<plus>", "<Right>"):
+        for sequence in (
+            "<KeyPress-d>",
+            "<KeyPress-D>",
+            "<KeyPress-plus>",
+            "<plus>",
+            "<Right>",
+        ):
+
             self._bind_shortcut(sequence, _wrap_generic("Hi", -1.0))
 
         for card, keys in self.CARD_KEY_BINDINGS.items():
@@ -187,6 +211,7 @@ class WongHalvesFrame(BaseModeFrame):
                 def handler(event):
                     self._record_card(c, v)
                     return "break"
+                  
                 return handler
 
             handler = _make_handler(card, value)
@@ -198,21 +223,81 @@ class WongHalvesFrame(BaseModeFrame):
                     self._bind_shortcut(sequence, handler)
 
     def on_hide(self) -> None:
+
+        if self._hotkey_window is not None and self._hotkey_window.winfo_exists():
+            self._hotkey_window.destroy()
+
+
         super().on_hide()
 
     def _show_hotkeys(self) -> None:
         """Display the key bindings for the Wong Halves layout."""
-        card_hints = [
-            "2: Q", "3: W", "4: E", "5: R",
-            "6: A", "7: S", "8: D", "9: F",
-            "10: G", "J: Z", "Q: X", "K: C", "A: V",
-        ]
-        hotkeys = (
-            "Low (+1): A, -, Left Arrow",
-            "Hi (-1): D, +, Right Arrow",
-            "Cards:\n  " + "\n  ".join(card_hints),
-            "Undo: <, ,, Ctrl+Z",
-            "Redo: >, ., Ctrl+Shift+Z",
-            "Reset Shoe: Ctrl+R",
+
+
+        if self._hotkey_window is not None and self._hotkey_window.winfo_exists():
+            self._hotkey_window.lift()
+            self._hotkey_window.focus_force()
+            return
+
+        window = tk.Toplevel(self)
+        window.title("Wong Halves Hotkeys")
+        window.resizable(False, False)
+        window.transient(self.winfo_toplevel())
+
+        container = ttk.Frame(window, padding=16)
+        container.grid(row=0, column=0, sticky="nsew")
+        window.columnconfigure(0, weight=1)
+        window.rowconfigure(0, weight=1)
+
+        ttk.Label(
+            container,
+            text="Keyboard shortcuts available while using Wong Halves.",
+            style="Caption.TLabel",
+            anchor="w",
+            justify="left",
+        ).grid(row=0, column=0, sticky="w")
+
+        actions = ttk.LabelFrame(container, text="Actions", padding=10)
+        actions.grid(row=1, column=0, sticky="ew", pady=(12, 12))
+        actions.columnconfigure(0, weight=1)
+
+        ttk.Label(
+            actions,
+            text=(
+                "Low (+1): A, -, Left Arrow\n"
+                "Hi (-1): D, +, Right Arrow\n"
+                "Undo: <, ,, Ctrl+Z\n"
+                "Redo: >, ., Ctrl+Shift+Z\n"
+                "Reset Shoe: Ctrl+R"
+            ),
+            justify="left",
+        ).grid(row=0, column=0, sticky="w")
+
+        cards_frame = ttk.LabelFrame(container, text="Card Shortcuts", padding=10)
+        cards_frame.grid(row=2, column=0, sticky="nsew")
+        for column in range(3):
+            cards_frame.columnconfigure(column, weight=1, uniform="cards")
+
+        card_items = list(self.CARD_KEY_BINDINGS.items())
+        for index, (card, keys) in enumerate(card_items):
+            row, column = divmod(index, 3)
+            cards_frame.rowconfigure(row, weight=1)
+            label = f"{card}: {', '.join(key.upper() for key in keys)}"
+            ttk.Label(cards_frame, text=label, anchor="w").grid(
+                row=row, column=column, sticky="w", padx=4, pady=2
+            )
+
+        ttk.Button(container, text="Close", command=window.destroy).grid(
+            row=3, column=0, sticky="e", pady=(12, 0)
         )
-        messagebox.showinfo("Wong Halves Hotkeys", "\n\n".join(hotkeys), parent=self)
+
+        window.bind(
+            "<Destroy>",
+            lambda event: setattr(self, "_hotkey_window", None)
+            if event.widget is window
+            else None,
+        )
+        window.focus_force()
+
+        self._hotkey_window = window
+

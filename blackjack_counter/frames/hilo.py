@@ -5,8 +5,11 @@
 # - Cards ranked 10, face cards, and aces are "high" and subtract 1 from the running count.
 # - The interface mirrors that logic with Low/Hi buttons; each press records the adjustment and refreshes totals.
 
-from tkinter import messagebox, ttk
-from typing import TYPE_CHECKING
+
+import tkinter as tk
+from tkinter import ttk
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+
 
 from blackjack_counter.frames.base import BaseModeFrame
 
@@ -19,6 +22,69 @@ class HiLoFrame(BaseModeFrame):
 
     def __init__(self, master: ttk.Frame, controller: "CountingApp") -> None:
         super().__init__(master, controller)
+
+        self._is_active = False
+        self._hotkey_window: Optional[tk.Toplevel] = None
+        self._hotkey_groups = [
+            {
+                "name": "letters",
+                "title": "Letters",
+                "low_label": "L",
+                "hi_label": "H",
+                "low_sequences": ("<KeyPress-l>", "<KeyPress-L>"),
+                "hi_sequences": ("<KeyPress-h>", "<KeyPress-H>"),
+            },
+            {
+                "name": "adjacent",
+                "title": "A / D",
+                "low_label": "A",
+                "hi_label": "D",
+                "low_sequences": ("<KeyPress-a>", "<KeyPress-A>"),
+                "hi_sequences": ("<KeyPress-d>", "<KeyPress-D>"),
+            },
+            {
+                "name": "symbols",
+                "title": "Minus / Plus",
+                "low_label": "-",
+                "hi_label": "+",
+                "low_sequences": ("<KeyPress-minus>", "<minus>"),
+                "hi_sequences": ("<KeyPress-plus>", "<plus>"),
+            },
+            {
+                "name": "horizontal_arrows",
+                "title": "Arrow Keys",
+                "low_label": "←",
+                "hi_label": "→",
+                "low_sequences": ("<Left>",),
+                "hi_sequences": ("<Right>",),
+            },
+            {
+                "name": "vertical_arrows",
+                "title": "Vertical Arrows",
+                "low_label": "↓",
+                "hi_label": "↑",
+                "low_sequences": ("<Down>",),
+                "hi_sequences": ("<Up>",),
+            },
+            {
+                "name": "brackets",
+                "title": "Brackets",
+                "low_label": "[",
+                "hi_label": "]",
+                "low_sequences": ("<KeyPress-bracketleft>", "<bracketleft>"),
+                "hi_sequences": ("<KeyPress-bracketright>", "<bracketright>"),
+            },
+        ]
+        self._hotkey_lookup = {group["name"]: group for group in self._hotkey_groups}
+        self._group_enabled: Dict[str, bool] = {
+            group_name: True for group_name in self._hotkey_lookup
+        }
+        self._group_bindings: Dict[str, List[Tuple[str, str]]] = {
+            group_name: [] for group_name in self._hotkey_lookup
+        }
+        self._hotkey_vars: Dict[str, tk.BooleanVar] = {
+            name: tk.BooleanVar(master=self, value=True) for name in self._hotkey_lookup
+        }
 
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=2)
@@ -36,7 +102,7 @@ class HiLoFrame(BaseModeFrame):
         self.reset_button.pack(fill="x", pady=(0, 10))
         self.menu_button = ttk.Button(control_frame, text="Menu", command=self._go_menu)
         self.menu_button.pack(fill="x")
-        # Added: quick reference for keyboard shortcuts
+
         self.hotkey_button = ttk.Button(control_frame, text="Hotkeys…", command=self._show_hotkeys)
         self.hotkey_button.pack(fill="x", pady=(10, 0))
 
@@ -59,7 +125,9 @@ class HiLoFrame(BaseModeFrame):
 
         self.low_button = ttk.Button(
             history_frame,
-            text="Low (+1)\n[L, A, -, ←, ↓, [",
+
+            text="Low (+1)",
+
             command=lambda: self._record("Low", 1.0),
         )
         self.low_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
@@ -88,7 +156,9 @@ class HiLoFrame(BaseModeFrame):
 
         self.hi_button = ttk.Button(
             running_frame,
-            text="Hi (-1)\n[H, D, +, →, ↑, ]",
+
+            text="Hi (-1)",
+
             command=lambda: self._record("Hi", -1.0),
         )
         self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
@@ -103,53 +173,153 @@ class HiLoFrame(BaseModeFrame):
     def on_show(self) -> None:
         super().on_show()
 
-        def _wrap_low(event):
-            self._record("Low", 1.0)
-            return "break"
+        self._is_active = True
 
-        def _wrap_hi(event):
-            self._record("Hi", -1.0)
-            return "break"
+        for name in self._group_bindings:
+            self._group_bindings[name] = []
 
-        # Expanded keybindings for convenience
-        for sequence in (
-            "<KeyPress-l>",
-            "<KeyPress-L>",
-            "<KeyPress-a>",
-            "<KeyPress-A>",
-            "<KeyPress-minus>",
-            "<minus>",
-            "<Left>",
-            "<Down>",
-            "<KeyPress-bracketleft>",
-            "<bracketleft>",
-        ):
-            self._bind_shortcut(sequence, _wrap_low)
-
-        for sequence in (
-            "<KeyPress-h>",
-            "<KeyPress-H>",
-            "<KeyPress-d>",
-            "<KeyPress-D>",
-            "<KeyPress-plus>",
-            "<plus>",
-            "<Right>",
-            "<Up>",
-            "<KeyPress-bracketright>",
-            "<bracketright>",
-        ):
-            self._bind_shortcut(sequence, _wrap_hi)
+        self._bind_enabled_hotkeys()
 
     def on_hide(self) -> None:
+        self._is_active = False
+
+        if self._hotkey_window is not None and self._hotkey_window.winfo_exists():
+            self._hotkey_window.destroy()
+
         super().on_hide()
 
+        for name in self._group_bindings:
+            self._group_bindings[name] = []
+
+    def _handle_low_key(self, event) -> str:
+        self._record("Low", 1.0)
+        return "break"
+
+    def _handle_hi_key(self, event) -> str:
+        self._record("Hi", -1.0)
+        return "break"
+
+    def _bind_enabled_hotkeys(self) -> None:
+        for name, enabled in self._group_enabled.items():
+            if enabled:
+                self._bind_hotkey_group(name)
+
+    def _bind_hotkey_group(self, name: str) -> None:
+        self._unbind_hotkey_group(name)
+
+        group = self._hotkey_lookup[name]
+        bindings: List[Tuple[str, str]] = []
+
+        for sequence in group["low_sequences"]:
+            funcid = self._bind_shortcut(sequence, self._handle_low_key)
+            bindings.append((sequence, funcid))
+
+        for sequence in group["hi_sequences"]:
+            funcid = self._bind_shortcut(sequence, self._handle_hi_key)
+            bindings.append((sequence, funcid))
+
+        self._group_bindings[name].extend(bindings)
+
+    def _unbind_hotkey_group(self, name: str) -> None:
+        bindings = self._group_bindings.get(name)
+        if not bindings:
+            return
+
+        for sequence, funcid in bindings:
+            self._unbind_shortcut(sequence, funcid)
+
+        self._group_bindings[name] = []
+
+    def _set_hotkey_group_enabled(self, name: str, enabled: bool) -> None:
+        previous = self._group_enabled.get(name, True)
+        self._group_enabled[name] = enabled
+
+        if not self._is_active:
+            return
+
+        if enabled and not previous:
+            self._bind_hotkey_group(name)
+        elif not enabled and previous:
+            self._unbind_hotkey_group(name)
+
+    def _toggle_hotkey_group(self, name: str) -> None:
+        enabled = self._hotkey_vars[name].get()
+        self._set_hotkey_group_enabled(name, enabled)
+
+    def _on_hotkey_window_destroy(self, event) -> None:
+        if event.widget is self._hotkey_window:
+            self._hotkey_window = None
+
     def _show_hotkeys(self) -> None:
-        """Present a quick reference of the Hi-Lo keyboard shortcuts."""
-        hotkeys = (
-            "Low (+1): L, A, -, Left Arrow, Down Arrow, [",
-            "Hi (-1): H, D, +, Right Arrow, Up Arrow, ]",
-            "Undo: <, ,, Ctrl+Z",
-            "Redo: >, ., Ctrl+Shift+Z",
-            "Reset Shoe: Ctrl+R",
+        """Present a toggleable reference of the Hi-Lo keyboard shortcuts."""
+
+        if self._hotkey_window is not None and self._hotkey_window.winfo_exists():
+            self._hotkey_window.lift()
+            self._hotkey_window.focus_force()
+            return
+
+        window = tk.Toplevel(self)
+        window.title("Hi-Lo Hotkeys")
+        window.resizable(False, False)
+        window.transient(self.winfo_toplevel())
+
+        container = ttk.Frame(window, padding=16)
+        container.grid(row=0, column=0, sticky="nsew")
+        window.columnconfigure(0, weight=1)
+        window.rowconfigure(0, weight=1)
+
+        ttk.Label(
+            container,
+            text="Toggle any pair to enable or disable its keyboard shortcut.",
+            style="Caption.TLabel",
+            anchor="w",
+            justify="left",
+        ).grid(row=0, column=0, sticky="w")
+
+        groups_frame = ttk.Frame(container)
+        groups_frame.grid(row=1, column=0, sticky="nsew", pady=(12, 12))
+        groups_frame.columnconfigure(0, weight=1)
+        groups_frame.columnconfigure(1, weight=1)
+
+        for index, group in enumerate(self._hotkey_groups):
+            row, column = divmod(index, 2)
+            groups_frame.rowconfigure(row, weight=1)
+            card = ttk.LabelFrame(groups_frame, text=group["title"], padding=10)
+            card.grid(row=row, column=column, padx=6, pady=6, sticky="nsew")
+            card.columnconfigure(0, weight=1)
+            card.columnconfigure(1, weight=1)
+
+            ttk.Label(card, text=f"Low: {group['low_label']}", anchor="center").grid(
+                row=0, column=0, sticky="ew"
+            )
+            ttk.Label(card, text=f"Hi: {group['hi_label']}", anchor="center").grid(
+                row=0, column=1, sticky="ew"
+            )
+
+            check = ttk.Checkbutton(
+                card,
+                text="Enabled",
+                variable=self._hotkey_vars[group["name"]],
+                command=lambda name=group["name"]: self._toggle_hotkey_group(name),
+            )
+            check.grid(row=1, column=0, columnspan=2, pady=(8, 0))
+
+        actions_frame = ttk.LabelFrame(container, text="Other Controls", padding=10)
+        actions_frame.grid(row=2, column=0, sticky="ew")
+        actions_frame.columnconfigure(0, weight=1)
+
+        ttk.Label(
+            actions_frame,
+            text="Undo: <, ,, Ctrl+Z\nRedo: >, ., Ctrl+Shift+Z\nReset Shoe: Ctrl+R",
+            justify="left",
+        ).grid(row=0, column=0, sticky="w")
+
+        ttk.Button(container, text="Close", command=window.destroy).grid(
+            row=3, column=0, sticky="e", pady=(12, 0)
         )
-        messagebox.showinfo("Hi-Lo Hotkeys", "\n".join(hotkeys), parent=self)
+
+        window.bind("<Destroy>", self._on_hotkey_window_destroy)
+        window.focus_force()
+
+        self._hotkey_window = window
+

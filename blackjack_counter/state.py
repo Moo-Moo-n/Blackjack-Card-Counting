@@ -18,9 +18,10 @@ class CountingState:
         self.decks_total = decks
         self.history: List[CountEntry] = []
         self._redo_stack: List[CountEntry] = []
-        self._undo_limit = 5          # max consecutive undos allowed
-        self._redo_limit = 20         # cap redo stack growth
-        self._undos_since_record = 0  # resets whenever a new record() happens
+
+        self._undo_limit = 5
+        self._redo_limit = 20
+        self._undos_since_record = 0
 
     def reset(self) -> None:
         """Clear all recorded cards and adjustments."""
@@ -60,9 +61,41 @@ class CountingState:
         """Indicate whether an undo action is currently allowed."""
         return bool(self.history) and self._undos_since_record < self._undo_limit
 
+        if not self.history or self._undos_since_record >= self._undo_limit:
+            return None
+
+        entry = self.history.pop()
+        self._redo_stack.append(entry)
+        self._undos_since_record += 1
+
+        if len(self._redo_stack) > self._redo_limit:
+            self._redo_stack.pop(0)
+
+        return entry
+
+    def redo(self) -> Optional[CountEntry]:
+        """Reapply the most recently undone entry if available."""
+
+        if not self._redo_stack:
+            return None
+
+        entry = self._redo_stack.pop()
+        self.history.append(entry)
+        if self._undos_since_record:
+            self._undos_since_record -= 1
+        return entry
+
+    @property
+    def can_undo(self) -> bool:
+        """Indicate whether an undo action is currently allowed."""
+
+        return bool(self.history) and self._undos_since_record < self._undo_limit
+
     @property
     def can_redo(self) -> bool:
         """Indicate whether a redo action is currently allowed."""
+
+
         return bool(self._redo_stack)
 
     @property
