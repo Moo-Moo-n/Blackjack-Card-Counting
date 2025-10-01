@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 MAX_REDO_HISTORY = 20
-MAX_UNDO_STREAK = 5
+MAX_UNDO_STREAK = 50
 
 
 @dataclass
