@@ -36,6 +36,7 @@ class HiLoFrame(BaseModeFrame):
         self.reset_button.pack(fill="x", pady=(0, 10))
         self.menu_button = ttk.Button(control_frame, text="Menu", command=self._go_menu)
         self.menu_button.pack(fill="x")
+        # Added: quick reference for keyboard shortcuts
         self.hotkey_button = ttk.Button(control_frame, text="Hotkeys…", command=self._show_hotkeys)
         self.hotkey_button.pack(fill="x", pady=(10, 0))
 
@@ -92,66 +93,4 @@ class HiLoFrame(BaseModeFrame):
         )
         self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
-    def _record(self, label: str, value: float) -> None:
-        """Store the Hi-Lo adjustment so the shared state can update counts."""
-
-        if not self.state:
-            return
-        # Each button press appends a CountEntry. BaseModeFrame.refresh() recomputes
-        # the running and true counts from that history so the labels stay current.
-        self.state.record(label, value)
-        self.refresh()
-
-    def on_show(self) -> None:
-        super().on_show()
-
-        def _wrap_low(event):
-            self._record("Low", 1.0)
-            return "break"
-
-        def _wrap_hi(event):
-            self._record("Hi", -1.0)
-            return "break"
-
-        for sequence in (
-            "<KeyPress-l>",
-            "<KeyPress-L>",
-            "<KeyPress-a>",
-            "<KeyPress-A>",
-            "<KeyPress-minus>",
-            "<minus>",
-            "<Left>",
-            "<Down>",
-            "<KeyPress-bracketleft>",
-            "<bracketleft>",
-        ):
-            self._bind_shortcut(sequence, _wrap_low)
-
-        for sequence in (
-            "<KeyPress-h>",
-            "<KeyPress-H>",
-            "<KeyPress-d>",
-            "<KeyPress-D>",
-            "<KeyPress-plus>",
-            "<plus>",
-            "<Right>",
-            "<Up>",
-            "<KeyPress-bracketright>",
-            "<bracketright>",
-        ):
-            self._bind_shortcut(sequence, _wrap_hi)
-
-    def on_hide(self) -> None:
-        super().on_hide()
-
-    def _show_hotkeys(self) -> None:
-        """Present a quick reference of the Hi-Lo keyboard shortcuts."""
-
-        hotkeys = (
-            "Low (+1): L, A, -, Left Arrow, Down Arrow, [",
-            "Hi (-1): H, D, +, Right Arrow, Up Arrow, ]",
-            "Undo: <, ,, Ctrl+Z",
-            "Redo: >, ., Ctrl+Shift+Z",
-            "Reset Shoe: Ctrl+R",
-        )
-        messagebox.showinfo("Hi-Lo Hotkeys", "\n".join(hotkeys), parent=self)
+    def _record(s_

@@ -34,6 +34,7 @@ class WongHalvesFrame(BaseModeFrame):
         "A": -1.0,
     }
 
+    # Keep the codex key layout + Hotkeys dialog
     CARD_KEY_BINDINGS: Dict[str, Iterable[str]] = {
         "2": ("q",),
         "3": ("w",),
@@ -152,21 +153,15 @@ class WongHalvesFrame(BaseModeFrame):
 
     def _record_generic(self, label: str, value: float) -> None:
         """Record a quick +1/-1 adjustment alongside card-specific presses."""
-
         if not self.state:
             return
-        # Shares the same CountEntry pipeline as the card buttons so the history
-        # and running/true counts remain consistent across input methods.
         self.state.record(label, value)
         self.refresh()
 
     def _record_card(self, card: str, value: float) -> None:
         """Log the fractional Wong Halves value for the chosen card rank."""
-
         if not self.state:
             return
-        # Each button uses the CARD_VALUES table above. BaseModeFrame.refresh()
-        # sums those values to produce the running and true counts displayed.
         self.state.record(card, value)
         self.refresh()
 
@@ -177,25 +172,12 @@ class WongHalvesFrame(BaseModeFrame):
             def handler(event):
                 self._record_generic(label, value)
                 return "break"
-
             return handler
 
-        for sequence in (
-            "<KeyPress-a>",
-            "<KeyPress-A>",
-            "<KeyPress-minus>",
-            "<minus>",
-            "<Left>",
-        ):
+        for sequence in ("<KeyPress-a>", "<KeyPress-A>", "<KeyPress-minus>", "<minus>", "<Left>"):
             self._bind_shortcut(sequence, _wrap_generic("Low", 1.0))
 
-        for sequence in (
-            "<KeyPress-d>",
-            "<KeyPress-D>",
-            "<KeyPress-plus>",
-            "<plus>",
-            "<Right>",
-        ):
+        for sequence in ("<KeyPress-d>", "<KeyPress-D>", "<KeyPress-plus>", "<plus>", "<Right>"):
             self._bind_shortcut(sequence, _wrap_generic("Hi", -1.0))
 
         for card, keys in self.CARD_KEY_BINDINGS.items():
@@ -205,7 +187,6 @@ class WongHalvesFrame(BaseModeFrame):
                 def handler(event):
                     self._record_card(c, v)
                     return "break"
-
                 return handler
 
             handler = _make_handler(card, value)
@@ -221,21 +202,10 @@ class WongHalvesFrame(BaseModeFrame):
 
     def _show_hotkeys(self) -> None:
         """Display the key bindings for the Wong Halves layout."""
-
         card_hints = [
-            "2: Q",
-            "3: W",
-            "4: E",
-            "5: R",
-            "6: A",
-            "7: S",
-            "8: D",
-            "9: F",
-            "10: G",
-            "J: Z",
-            "Q: X",
-            "K: C",
-            "A: V",
+            "2: Q", "3: W", "4: E", "5: R",
+            "6: A", "7: S", "8: D", "9: F",
+            "10: G", "J: Z", "Q: X", "K: C", "A: V",
         ]
         hotkeys = (
             "Low (+1): A, -, Left Arrow",
