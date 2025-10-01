@@ -37,28 +37,31 @@ class WongHalvesFrame(BaseModeFrame):
     def __init__(self, master: ttk.Frame, controller: "CountingApp") -> None:
         super().__init__(master, controller)
 
-        self.columnconfigure(0, weight=3)
-        self.columnconfigure(1, weight=1)
-        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=5)
+        self.rowconfigure(1, weight=1)
 
         self._build_layout()
 
     def _build_layout(self) -> None:
-        primary = ttk.Frame(self)
-        primary.grid(row=0, column=0, sticky="nsew")
+        top_panel = ttk.Frame(self)
+        top_panel.grid(row=0, column=0, sticky="nsew")
 
-        primary.columnconfigure(0, weight=1)
-        primary.columnconfigure(1, weight=2)
-        primary.columnconfigure(2, weight=1)
-        primary.columnconfigure(3, weight=2)
-        primary.rowconfigure(0, weight=1)
+        bottom_panel = ttk.Frame(self, padding=(10, 6))
+        bottom_panel.grid(row=1, column=0, sticky="nsew")
 
-        control_frame = ttk.Frame(primary)
+        top_panel.columnconfigure(0, weight=1)
+        top_panel.columnconfigure(1, weight=2)
+        top_panel.columnconfigure(2, weight=1)
+        top_panel.columnconfigure(3, weight=1)
+        top_panel.rowconfigure(0, weight=1)
+
+        control_frame = ttk.Frame(top_panel)
         control_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         ttk.Button(control_frame, text="Reset Shoe", command=self._reset_shoe).pack(fill="x", pady=(0, 10))
         ttk.Button(control_frame, text="Menu", command=self._go_menu).pack(fill="x")
 
-        history_frame = ttk.Frame(primary, padding=(10, 0))
+        history_frame = ttk.Frame(top_panel, padding=(10, 0))
         history_frame.grid(row=0, column=1, sticky="nsew")
         history_frame.columnconfigure(0, weight=1)
 
@@ -73,10 +76,11 @@ class WongHalvesFrame(BaseModeFrame):
         )
         history_label.pack(fill="x")
         self._bind_wraplength(history_label, history_box)
+        self._freeze_panel_width(history_frame, column_manager=top_panel, column_index=1, inner=history_box)
 
         ttk.Button(history_frame, text="Low (+1)", command=lambda: self._record_generic("Low", 1.0)).grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
-        true_frame = ttk.Frame(primary, padding=(10, 0))
+        true_frame = ttk.Frame(top_panel, padding=(10, 0))
         true_frame.grid(row=0, column=2, sticky="nsew")
         true_frame.columnconfigure(0, weight=1)
 
@@ -86,7 +90,7 @@ class WongHalvesFrame(BaseModeFrame):
         ttk.Label(true_box, textvariable=self.cards_var, style="Caption.TLabel", anchor="center").pack(fill="x", pady=(8, 0))
         ttk.Button(true_frame, text="Undo", command=self._undo_entry).grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
-        running_frame = ttk.Frame(primary, padding=(10, 0))
+        running_frame = ttk.Frame(top_panel, padding=(10, 0))
         running_frame.grid(row=0, column=3, sticky="nsew")
         running_frame.columnconfigure(0, weight=1)
 
@@ -95,27 +99,18 @@ class WongHalvesFrame(BaseModeFrame):
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
         ttk.Button(running_frame, text="Hi (-1)", command=lambda: self._record_generic("Hi", -1.0)).grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
-        card_panel = ttk.Frame(self, padding=(10, 0))
-        card_panel.grid(row=0, column=1, sticky="nsew")
-        card_panel.rowconfigure(0, weight=1)
-        card_panel.rowconfigure(1, weight=0)
-        card_panel.columnconfigure(0, weight=1)
-
-        buttons_frame = ttk.Frame(card_panel)
-        buttons_frame.grid(row=1, column=0, sticky="ew")
-        for column in range(7):
-            buttons_frame.columnconfigure(column, weight=1)
+        for column in range(len(self.CARD_VALUES)):
+            bottom_panel.columnconfigure(column, weight=1, uniform="cards")
+        bottom_panel.rowconfigure(0, weight=1)
 
         cards = list(self.CARD_VALUES.items())
         for index, (card, value) in enumerate(cards):
-            row = index // 7
-            col = index % 7
             ttk.Button(
-                buttons_frame,
+                bottom_panel,
                 text=f"{card}\n({format_increment(value)})",
                 style="Card.TButton",
                 command=lambda c=card, v=value: self._record_card(c, v),
-            ).grid(row=row, column=col, padx=2, pady=3, sticky="ew")
+            ).grid(row=0, column=index, padx=2, pady=3, sticky="nsew")
 
     def _record_generic(self, label: str, value: float) -> None:
         """Record a quick +1/-1 adjustment alongside card-specific presses."""

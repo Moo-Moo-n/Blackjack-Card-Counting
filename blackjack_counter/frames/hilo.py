@@ -23,7 +23,7 @@ class HiLoFrame(BaseModeFrame):
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=2)
         self.columnconfigure(2, weight=1)
-        self.columnconfigure(3, weight=2)
+        self.columnconfigure(3, weight=1)
         self.rowconfigure(0, weight=1)
 
         self._build_controls()
@@ -50,6 +50,7 @@ class HiLoFrame(BaseModeFrame):
         )
         history_label.pack(fill="x")
         self._bind_wraplength(history_label, history_box)
+        self._freeze_panel_width(history_frame, column_manager=self, column_index=1, inner=history_box)
 
         ttk.Button(history_frame, text="Low (+1)", command=lambda: self._record("Low", 1.0)).grid(row=1, column=0, sticky="ew", pady=(12, 0))
 

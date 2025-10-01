@@ -55,6 +55,38 @@ class BaseModeFrame(ttk.Frame):
         container.bind("<Configure>", _sync_wrap, add="+")
         container.after_idle(lambda: label.configure(wraplength=max(60, container.winfo_width() - padding)))
 
+
+    def _freeze_panel_width(self, panel: tk.Widget, *, column_manager: tk.Widget, column_index: int, inner: Optional[tk.Widget] = None) -> None:
+        """Keep a panel from growing wider than its initial width."""
+
+        if getattr(panel, "_width_locked", False):
+            return
+
+        def _capture_width() -> None:
+            panel.update_idletasks()
+            width = panel.winfo_width()
+            if width <= 1:
+                panel.after(50, _capture_width)
+                return
+
+            column_manager.columnconfigure(column_index, weight=0, minsize=width)
+            try:
+                panel.configure(width=width)
+            except tk.TclError:
+                pass
+            try:
+                panel.grid_propagate(False)
+            except tk.TclError:
+                pass
+            if inner is not None:
+                try:
+                    inner.configure(width=width)
+                except tk.TclError:
+                    pass
+            panel._width_locked = True  # type: ignore[attr-defined]
+
+        panel.after_idle(_capture_width)
+
     def _reset_shoe(self) -> None:
         """Clear the shoe back to an empty state."""
 
