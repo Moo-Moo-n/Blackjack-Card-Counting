@@ -57,6 +57,7 @@ class HiLoFrame(BaseModeFrame):
                     "<KP_Add>",
                 ),
                 "hi_expected_char": "+",
+                "hi_expected_keysyms": ("plus", "KP_Add"),
             },
             {
                 "name": "horizontal_arrows",
@@ -212,12 +213,17 @@ class HiLoFrame(BaseModeFrame):
             if enabled:
                 self._bind_hotkey_group(name)
 
-    def _char_filtered_handler(self, handler, expected_char: str):
-        """Return a handler that only fires when the expected char is pressed."""
+    def _char_filtered_handler(self, handler, *, expected_char: Optional[str], expected_keysyms: Tuple[str, ...]):
+        """Return a handler that only fires when the expected char or keysym is pressed."""
+
         def _filtered(event):
-            if getattr(event, "char", "") != expected_char:
-                return None
-            return handler(event)
+            char = getattr(event, "char", "")
+            keysym = getattr(event, "keysym", "")
+            if expected_char is not None and char == expected_char:
+                return handler(event)
+            if expected_keysyms and keysym in expected_keysyms:
+                return handler(event)
+            return None
 
         return _filtered
 
@@ -227,11 +233,27 @@ class HiLoFrame(BaseModeFrame):
         group = self._hotkey_lookup[name]
         bindings: List[Tuple[str, str]] = []
 
-        low_expected = group.get("low_expected_char")
-        low_handler = self._handle_low_key if low_expected is None else self._char_filtered_handler(self._handle_low_key, low_expected)
+        low_expected_char = group.get("low_expected_char")
+        low_expected_keysyms: Tuple[str, ...] = tuple(group.get("low_expected_keysyms", ()))
+        if low_expected_char is None and not low_expected_keysyms:
+            low_handler = self._handle_low_key
+        else:
+            low_handler = self._char_filtered_handler(
+                self._handle_low_key,
+                expected_char=low_expected_char,
+                expected_keysyms=low_expected_keysyms,
+            )
 
-        hi_expected = group.get("hi_expected_char")
-        hi_handler = self._handle_hi_key if hi_expected is None else self._char_filtered_handler(self._handle_hi_key, hi_expected)
+        hi_expected_char = group.get("hi_expected_char")
+        hi_expected_keysyms: Tuple[str, ...] = tuple(group.get("hi_expected_keysyms", ()))
+        if hi_expected_char is None and not hi_expected_keysyms:
+            hi_handler = self._handle_hi_key
+        else:
+            hi_handler = self._char_filtered_handler(
+                self._handle_hi_key,
+                expected_char=hi_expected_char,
+                expected_keysyms=hi_expected_keysyms,
+            )
 
         for sequence in group["low_sequences"]:
             funcid = self._bind_shortcut(sequence, low_handler)
