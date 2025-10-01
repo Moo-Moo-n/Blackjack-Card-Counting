@@ -5,9 +5,11 @@
 # - The buttons for 2 through A add those fractional adjustments to the running count.
 # - We keep the low/high shortcuts so players can apply generic +1/-1 presses as needed.
 
+
 import tkinter as tk
 from tkinter import ttk
 from typing import Dict, Iterable, Optional, TYPE_CHECKING
+
 
 from blackjack_counter.formatting import format_increment
 from blackjack_counter.frames.base import BaseModeFrame
@@ -34,6 +36,7 @@ class WongHalvesFrame(BaseModeFrame):
         "K": -1.0,
         "A": -1.0,
     }
+
 
     CARD_KEY_BINDINGS: Dict[str, Iterable[str]] = {
         "2": ("q",),
@@ -103,7 +106,9 @@ class WongHalvesFrame(BaseModeFrame):
 
         self.low_button = ttk.Button(
             history_frame,
+
             text="Low (+1)",
+
             command=lambda: self._record_generic("Low", 1.0),
         )
         self.low_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
@@ -130,7 +135,9 @@ class WongHalvesFrame(BaseModeFrame):
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
         self.hi_button = ttk.Button(
             running_frame,
+
             text="Hi (-1)",
+
             command=lambda: self._record_generic("Hi", -1.0),
         )
         self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
@@ -155,21 +162,15 @@ class WongHalvesFrame(BaseModeFrame):
 
     def _record_generic(self, label: str, value: float) -> None:
         """Record a quick +1/-1 adjustment alongside card-specific presses."""
-
         if not self.state:
             return
-        # Shares the same CountEntry pipeline as the card buttons so the history
-        # and running/true counts remain consistent across input methods.
         self.state.record(label, value)
         self.refresh()
 
     def _record_card(self, card: str, value: float) -> None:
         """Log the fractional Wong Halves value for the chosen card rank."""
-
         if not self.state:
             return
-        # Each button uses the CARD_VALUES table above. BaseModeFrame.refresh()
-        # sums those values to produce the running and true counts displayed.
         self.state.record(card, value)
         self.refresh()
 
@@ -180,6 +181,7 @@ class WongHalvesFrame(BaseModeFrame):
             def handler(event):
                 self._record_generic(label, value)
                 return "break"
+
 
             return handler
 
@@ -199,6 +201,7 @@ class WongHalvesFrame(BaseModeFrame):
             "<plus>",
             "<Right>",
         ):
+
             self._bind_shortcut(sequence, _wrap_generic("Hi", -1.0))
 
         for card, keys in self.CARD_KEY_BINDINGS.items():
@@ -208,7 +211,7 @@ class WongHalvesFrame(BaseModeFrame):
                 def handler(event):
                     self._record_card(c, v)
                     return "break"
-
+                  
                 return handler
 
             handler = _make_handler(card, value)
@@ -220,13 +223,16 @@ class WongHalvesFrame(BaseModeFrame):
                     self._bind_shortcut(sequence, handler)
 
     def on_hide(self) -> None:
+
         if self._hotkey_window is not None and self._hotkey_window.winfo_exists():
             self._hotkey_window.destroy()
+
 
         super().on_hide()
 
     def _show_hotkeys(self) -> None:
         """Display the key bindings for the Wong Halves layout."""
+
 
         if self._hotkey_window is not None and self._hotkey_window.winfo_exists():
             self._hotkey_window.lift()
@@ -294,3 +300,4 @@ class WongHalvesFrame(BaseModeFrame):
         window.focus_force()
 
         self._hotkey_window = window
+

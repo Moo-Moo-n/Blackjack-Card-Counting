@@ -5,9 +5,11 @@
 # - Cards ranked 10, face cards, and aces are "high" and subtract 1 from the running count.
 # - The interface mirrors that logic with Low/Hi buttons; each press records the adjustment and refreshes totals.
 
+
 import tkinter as tk
 from tkinter import ttk
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+
 
 from blackjack_counter.frames.base import BaseModeFrame
 
@@ -100,6 +102,7 @@ class HiLoFrame(BaseModeFrame):
         self.reset_button.pack(fill="x", pady=(0, 10))
         self.menu_button = ttk.Button(control_frame, text="Menu", command=self._go_menu)
         self.menu_button.pack(fill="x")
+
         self.hotkey_button = ttk.Button(control_frame, text="Hotkeys…", command=self._show_hotkeys)
         self.hotkey_button.pack(fill="x", pady=(10, 0))
 
@@ -122,7 +125,9 @@ class HiLoFrame(BaseModeFrame):
 
         self.low_button = ttk.Button(
             history_frame,
+
             text="Low (+1)",
+
             command=lambda: self._record("Low", 1.0),
         )
         self.low_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
@@ -151,23 +156,23 @@ class HiLoFrame(BaseModeFrame):
 
         self.hi_button = ttk.Button(
             running_frame,
+
             text="Hi (-1)",
+
             command=lambda: self._record("Hi", -1.0),
         )
         self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
     def _record(self, label: str, value: float) -> None:
         """Store the Hi-Lo adjustment so the shared state can update counts."""
-
         if not self.state:
             return
-        # Each button press appends a CountEntry. BaseModeFrame.refresh() recomputes
-        # the running and true counts from that history so the labels stay current.
         self.state.record(label, value)
         self.refresh()
 
     def on_show(self) -> None:
         super().on_show()
+
         self._is_active = True
 
         for name in self._group_bindings:
@@ -317,3 +322,4 @@ class HiLoFrame(BaseModeFrame):
         window.focus_force()
 
         self._hotkey_window = window
+

@@ -139,11 +139,14 @@ class BaseModeFrame(ttk.Frame):
 
         self.controller.show_frame("ModeSelection")
 
+
     def _bind_shortcut(self, sequence: str, callback) -> str:
+
         """Register a keyboard shortcut and track it for later cleanup."""
 
         funcid = self.controller.bind(sequence, callback, add="+")
         self._shortcut_bindings.append((sequence, funcid))
+
         return funcid
 
     def _unbind_shortcut(self, sequence: str, funcid: str) -> None:
@@ -156,6 +159,7 @@ class BaseModeFrame(ttk.Frame):
                 self._shortcut_bindings.remove((sequence, funcid))
             except ValueError:
                 pass
+
 
     def on_show(self) -> None:
         """Prepare the frame when it becomes visible."""
