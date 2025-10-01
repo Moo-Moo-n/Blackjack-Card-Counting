@@ -32,8 +32,10 @@ class HiLoFrame(BaseModeFrame):
         control_frame = ttk.Frame(self)
         control_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
 
-        ttk.Button(control_frame, text="Reset Shoe", command=self._reset_shoe).pack(fill="x", pady=(0, 10))
-        ttk.Button(control_frame, text="Menu", command=self._go_menu).pack(fill="x")
+        self.reset_button = ttk.Button(control_frame, text="Reset Shoe [Ctrl+R]", command=self._reset_shoe)
+        self.reset_button.pack(fill="x", pady=(0, 10))
+        self.menu_button = ttk.Button(control_frame, text="Menu", command=self._go_menu)
+        self.menu_button.pack(fill="x")
 
         history_frame = ttk.Frame(self, padding=(10, 0))
         history_frame.grid(row=0, column=1, sticky="nsew")
@@ -52,7 +54,12 @@ class HiLoFrame(BaseModeFrame):
         self._bind_wraplength(history_label, history_box)
         self._freeze_panel_width(history_frame, column_manager=self, column_index=1, inner=history_box)
 
-        ttk.Button(history_frame, text="Low (+1)", command=lambda: self._record("Low", 1.0)).grid(row=1, column=0, sticky="ew", pady=(12, 0))
+        self.low_button = ttk.Button(
+            history_frame,
+            text="Low (+1) [A/-/←]",
+            command=lambda: self._record("Low", 1.0),
+        )
+        self.low_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
         true_frame = ttk.Frame(self, padding=(10, 0))
         true_frame.grid(row=0, column=2, sticky="nsew")
@@ -63,7 +70,10 @@ class HiLoFrame(BaseModeFrame):
         ttk.Label(true_box, textvariable=self.true_var, style="Value.TLabel", anchor="center").pack(fill="x")
         ttk.Label(true_box, textvariable=self.cards_var, style="Caption.TLabel", anchor="center").pack(fill="x", pady=(8, 0))
 
-        ttk.Button(true_frame, text="Undo", command=self._undo_entry).grid(row=1, column=0, sticky="ew", pady=(12, 0))
+        self.undo_button = ttk.Button(true_frame, text="Undo [< / Ctrl+Z]", command=self._undo_entry)
+        self.undo_button.grid(row=1, column=0, sticky="ew", pady=(12, 6))
+        self.redo_button = ttk.Button(true_frame, text="Redo [> / Ctrl+Shift+Z]", command=self._redo_entry)
+        self.redo_button.grid(row=2, column=0, sticky="ew")
 
         running_frame = ttk.Frame(self, padding=(10, 0))
         running_frame.grid(row=0, column=3, sticky="nsew")
@@ -73,7 +83,12 @@ class HiLoFrame(BaseModeFrame):
         running_box.grid(row=0, column=0, sticky="nsew")
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
 
-        ttk.Button(running_frame, text="Hi (-1)", command=lambda: self._record("Hi", -1.0)).grid(row=1, column=0, sticky="ew", pady=(12, 0))
+        self.hi_button = ttk.Button(
+            running_frame,
+            text="Hi (-1) [D/+/→]",
+            command=lambda: self._record("Hi", -1.0),
+        )
+        self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
     def _record(self, label: str, value: float) -> None:
         """Store the Hi-Lo adjustment so the shared state can update counts."""
@@ -84,3 +99,35 @@ class HiLoFrame(BaseModeFrame):
         # the running and true counts from that history so the labels stay current.
         self.state.record(label, value)
         self.refresh()
+
+    def on_show(self) -> None:
+        super().on_show()
+
+        def _wrap_low(event):
+            self._record("Low", 1.0)
+            return "break"
+
+        def _wrap_hi(event):
+            self._record("Hi", -1.0)
+            return "break"
+
+        for sequence in (
+            "<KeyPress-a>",
+            "<KeyPress-A>",
+            "<KeyPress-minus>",
+            "<minus>",
+            "<Left>",
+        ):
+            self._bind_shortcut(sequence, _wrap_low)
+
+        for sequence in (
+            "<KeyPress-d>",
+            "<KeyPress-D>",
+            "<KeyPress-plus>",
+            "<plus>",
+            "<Right>",
+        ):
+            self._bind_shortcut(sequence, _wrap_hi)
+
+    def on_hide(self) -> None:
+        super().on_hide()
