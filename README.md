@@ -2,6 +2,12 @@
 
 A lightweight desktop helper that lets you practice and run two common blackjack counting systems: **Hi-Lo** and **Wong Halves**. The interface stays true to the layouts you described and keeps the running / historical counts presented horizontally for quick scanning while you play.
 
+## Project structure
+- main.py keeps the entry point tiny and easy to read.
+- lackjack_counter/app.py wires up the window, navigation, and shared styling.
+- lackjack_counter/state.py and lackjack_counter/formatting.py hold the core logic.
+- lackjack_counter/frames/ contains the reusable base frame plus one module per screen.
+
 ## Features
 - Start menu with quick access to each counting mode.
 - Hi-Lo layout with dedicated _Low_, _High_, _Undo_, and _Reset Shoe_ controls.
@@ -29,7 +35,7 @@ The app has no external dependencies beyond the standard library, so you can bun
    `powershell
    pyinstaller --onefile --windowed main.py
    `
-3. Your distributable executable will be under dist\main.exe. Share that file with friends; they won't need Python installed.
+3. Your distributable executable will be under dist\main.exe. Share that file with friends; they will not need Python installed.
 
 If you want to customize the executable name or icon, PyInstaller flags such as --name and --icon work as usual.
 
@@ -39,4 +45,3 @@ If you want to customize the executable name or icon, PyInstaller flags such as 
 - Undo removes the most recent entry (card or low/high press) so the history and counts always stay in sync.
 
 Happy practicing!
-
