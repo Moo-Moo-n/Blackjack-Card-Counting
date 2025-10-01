@@ -93,4 +93,63 @@ class HiLoFrame(BaseModeFrame):
         )
         self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
-    def _record(s_
+    def _record(self, label: str, value: float) -> None:
+        """Store the Hi-Lo adjustment so the shared state can update counts."""
+        if not self.state:
+            return
+        self.state.record(label, value)
+        self.refresh()
+
+    def on_show(self) -> None:
+        super().on_show()
+
+        def _wrap_low(event):
+            self._record("Low", 1.0)
+            return "break"
+
+        def _wrap_hi(event):
+            self._record("Hi", -1.0)
+            return "break"
+
+        # Expanded keybindings for convenience
+        for sequence in (
+            "<KeyPress-l>",
+            "<KeyPress-L>",
+            "<KeyPress-a>",
+            "<KeyPress-A>",
+            "<KeyPress-minus>",
+            "<minus>",
+            "<Left>",
+            "<Down>",
+            "<KeyPress-bracketleft>",
+            "<bracketleft>",
+        ):
+            self._bind_shortcut(sequence, _wrap_low)
+
+        for sequence in (
+            "<KeyPress-h>",
+            "<KeyPress-H>",
+            "<KeyPress-d>",
+            "<KeyPress-D>",
+            "<KeyPress-plus>",
+            "<plus>",
+            "<Right>",
+            "<Up>",
+            "<KeyPress-bracketright>",
+            "<bracketright>",
+        ):
+            self._bind_shortcut(sequence, _wrap_hi)
+
+    def on_hide(self) -> None:
+        super().on_hide()
+
+    def _show_hotkeys(self) -> None:
+        """Present a quick reference of the Hi-Lo keyboard shortcuts."""
+        hotkeys = (
+            "Low (+1): L, A, -, Left Arrow, Down Arrow, [",
+            "Hi (-1): H, D, +, Right Arrow, Up Arrow, ]",
+            "Undo: <, ,, Ctrl+Z",
+            "Redo: >, ., Ctrl+Shift+Z",
+            "Reset Shoe: Ctrl+R",
+        )
+        messagebox.showinfo("Hi-Lo Hotkeys", "\n".join(hotkeys), parent=self)
