@@ -1,5 +1,10 @@
 """Frame that implements the Wong Halves counting layout."""
 
+# Wong Halves counting notes:
+# - Each rank has a half-step weight (e.g., 5 = +1.5, 9 = -0.5) to better model the shoe.
+# - The buttons for 2 through A add those fractional adjustments to the running count.
+# - We keep the low/high shortcuts so players can apply generic +1/-1 presses as needed.
+
 from tkinter import ttk
 from typing import TYPE_CHECKING
 
@@ -59,7 +64,16 @@ class WongHalvesFrame(BaseModeFrame):
 
         history_box = ttk.LabelFrame(history_frame, text="Previously Counted", padding=10)
         history_box.grid(row=0, column=0, sticky="nsew")
-        ttk.Label(history_box, textvariable=self.history_var, style="Caption.TLabel", anchor="center", justify="center", wraplength=1000).pack(fill="x")
+        history_label = ttk.Label(
+            history_box,
+            textvariable=self.history_var,
+            style="Caption.TLabel",
+            anchor="w",
+            justify="left",
+        )
+        history_label.pack(fill="x")
+        self._bind_wraplength(history_label, history_box)
+
         ttk.Button(history_frame, text="Low (+1)", command=lambda: self._record_generic("Low", 1.0)).grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
         true_frame = ttk.Frame(primary, padding=(10, 0))
@@ -104,13 +118,21 @@ class WongHalvesFrame(BaseModeFrame):
             ).grid(row=row, column=col, padx=2, pady=3, sticky="ew")
 
     def _record_generic(self, label: str, value: float) -> None:
+        """Record a quick +1/-1 adjustment alongside card-specific presses."""
+
         if not self.state:
             return
+        # Shares the same CountEntry pipeline as the card buttons so the history
+        # and running/true counts remain consistent across input methods.
         self.state.record(label, value)
         self.refresh()
 
     def _record_card(self, card: str, value: float) -> None:
+        """Log the fractional Wong Halves value for the chosen card rank."""
+
         if not self.state:
             return
+        # Each button uses the CARD_VALUES table above. BaseModeFrame.refresh()
+        # sums those values to produce the running and true counts displayed.
         self.state.record(card, value)
         self.refresh()

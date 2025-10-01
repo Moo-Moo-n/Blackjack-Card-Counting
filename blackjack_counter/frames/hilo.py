@@ -1,5 +1,10 @@
 """Frame that implements the Hi-Lo counting layout."""
 
+# Hi-Lo counting notes:
+# - Cards ranked 2 through 6 are considered "low" and add +1 to the running count.
+# - Cards ranked 10, face cards, and aces are "high" and subtract 1 from the running count.
+# - The interface mirrors that logic with Low/Hi buttons; each press records the adjustment and refreshes totals.
+
 from tkinter import ttk
 from typing import TYPE_CHECKING
 
@@ -36,7 +41,15 @@ class HiLoFrame(BaseModeFrame):
 
         history_box = ttk.LabelFrame(history_frame, text="Previously Counted", padding=10)
         history_box.grid(row=0, column=0, sticky="nsew")
-        ttk.Label(history_box, textvariable=self.history_var, style="Caption.TLabel", anchor="center", justify="center", wraplength=1000).pack(fill="x")
+        history_label = ttk.Label(
+            history_box,
+            textvariable=self.history_var,
+            style="Caption.TLabel",
+            anchor="w",
+            justify="left",
+        )
+        history_label.pack(fill="x")
+        self._bind_wraplength(history_label, history_box)
 
         ttk.Button(history_frame, text="Low (+1)", command=lambda: self._record("Low", 1.0)).grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
@@ -62,7 +75,11 @@ class HiLoFrame(BaseModeFrame):
         ttk.Button(running_frame, text="Hi (-1)", command=lambda: self._record("Hi", -1.0)).grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
     def _record(self, label: str, value: float) -> None:
+        """Store the Hi-Lo adjustment so the shared state can update counts."""
+
         if not self.state:
             return
+        # Each button press appends a CountEntry. BaseModeFrame.refresh() recomputes
+        # the running and true counts from that history so the labels stay current.
         self.state.record(label, value)
         self.refresh()

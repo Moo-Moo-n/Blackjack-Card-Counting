@@ -45,6 +45,16 @@ class BaseModeFrame(ttk.Frame):
         self.true_var.set(f"{self.state.true_count:+.2f}")
         self.cards_var.set(f"Cards seen: {self.state.cards_seen}")
 
+    def _bind_wraplength(self, label: ttk.Label, container: tk.Widget, padding: int = 18) -> None:
+        """Keep label text wrapping in sync with the container width."""
+
+        def _sync_wrap(event) -> None:
+            usable_width = max(60, event.width - padding)
+            label.configure(wraplength=usable_width)
+
+        container.bind("<Configure>", _sync_wrap, add="+")
+        container.after_idle(lambda: label.configure(wraplength=max(60, container.winfo_width() - padding)))
+
     def _reset_shoe(self) -> None:
         """Clear the shoe back to an empty state."""
 
@@ -66,3 +76,5 @@ class BaseModeFrame(ttk.Frame):
         """Return to the mode-selection screen."""
 
         self.controller.show_frame("ModeSelection")
+
+
