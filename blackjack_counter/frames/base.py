@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Optional, TYPE_CHECKING
+from typing import List, Optional, Tuple, TYPE_CHECKING
 
 from blackjack_counter.formatting import format_increment
 from blackjack_counter.state import CountingState
@@ -24,6 +24,13 @@ class BaseModeFrame(ttk.Frame):
         self.true_var = tk.StringVar(value="0.00")
         self.cards_var = tk.StringVar(value="Cards seen: 0")
 
+        self.reset_button: Optional[ttk.Button] = None
+        self.menu_button: Optional[ttk.Button] = None
+        self.undo_button: Optional[ttk.Button] = None
+        self.redo_button: Optional[ttk.Button] = None
+
+        self._shortcut_bindings: List[Tuple[str, str]] = []
+
     def set_state(self, state: CountingState) -> None:
         """Attach a new counting state and refresh the visuals."""
 
@@ -44,6 +51,20 @@ class BaseModeFrame(ttk.Frame):
         self.running_var.set(format_increment(self.state.running_count))
         self.true_var.set(f"{self.state.true_count:+.2f}")
         self.cards_var.set(f"Cards seen: {self.state.cards_seen}")
+
+        self._sync_control_states()
+
+    def _sync_control_states(self) -> None:
+        """Enable or disable undo/redo buttons based on availability."""
+
+        undo_enabled = bool(self.state and self.state.can_undo)
+        redo_enabled = bool(self.state and self.state.can_redo)
+
+        if self.undo_button is not None:
+            self.undo_button.configure(state="normal" if undo_enabled else "disabled")
+
+        if self.redo_button is not None:
+            self.redo_button.configure(state="normal" if redo_enabled else "disabled")
 
     def _bind_wraplength(self, label: ttk.Label, container: tk.Widget, padding: int = 18) -> None:
         """Keep label text wrapping in sync with the container width."""
@@ -104,9 +125,50 @@ class BaseModeFrame(ttk.Frame):
         if removed is not None:
             self.refresh()
 
+    def _redo_entry(self) -> None:
+        """Reapply the most recently undone value."""
+
+        if not self.state:
+            return
+        restored = self.state.redo()
+        if restored is not None:
+            self.refresh()
+
     def _go_menu(self) -> None:
         """Return to the mode-selection screen."""
 
         self.controller.show_frame("ModeSelection")
+
+    def _bind_shortcut(self, sequence: str, callback) -> None:
+        """Register a keyboard shortcut and track it for later cleanup."""
+
+        funcid = self.controller.bind(sequence, callback, add="+")
+        self._shortcut_bindings.append((sequence, funcid))
+
+    def on_show(self) -> None:
+        """Prepare the frame when it becomes visible."""
+
+        self.focus_set()
+        self._shortcut_bindings.clear()
+
+        def _wrap(action):
+            def handler(event):
+                action()
+                return "break"
+
+            return handler
+
+        self._bind_shortcut("<Control-r>", _wrap(self._reset_shoe))
+        for sequence in ("<less>", "<KeyPress-comma>", "<Control-z>"):
+            self._bind_shortcut(sequence, _wrap(self._undo_entry))
+        for sequence in ("<greater>", "<KeyPress-period>", "<Control-Shift-Z>"):
+            self._bind_shortcut(sequence, _wrap(self._redo_entry))
+
+    def on_hide(self) -> None:
+        """Remove any active bindings before the frame is hidden."""
+
+        for sequence, funcid in self._shortcut_bindings:
+            self.controller.unbind(sequence, funcid)
+        self._shortcut_bindings.clear()
 
 
