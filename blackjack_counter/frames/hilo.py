@@ -58,7 +58,7 @@ class HiLoFrame(BaseModeFrame):
 
         self.low_button = ttk.Button(
             history_frame,
-            text="Low (+1) [A/-/←]",
+            text="Low (+1)\n[L, A, -, ←, ↓, [",
             command=lambda: self._record("Low", 1.0),
         )
         self.low_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
@@ -87,7 +87,7 @@ class HiLoFrame(BaseModeFrame):
 
         self.hi_button = ttk.Button(
             running_frame,
-            text="Hi (-1) [D/+/→]",
+            text="Hi (-1)\n[H, D, +, →, ↑, ]",
             command=lambda: self._record("Hi", -1.0),
         )
         self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))

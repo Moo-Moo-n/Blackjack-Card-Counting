@@ -43,11 +43,11 @@ class WongHalvesFrame(BaseModeFrame):
         "7": ("s",),
         "8": ("d",),
         "9": ("f",),
-        "10": ("h",),
-        "J": ("j",),
-        "Q": ("k",),
-        "K": ("l",),
-        "A": ("g",),
+        "10": ("g",),
+        "J": ("h",),
+        "Q": ("j",),
+        "K": ("k",),
+        "A": ("l",),
     }
 
     def __init__(self, master: ttk.Frame, controller: "CountingApp") -> None:
@@ -231,11 +231,11 @@ class WongHalvesFrame(BaseModeFrame):
             "7: S",
             "8: D",
             "9: F",
-            "10: H",
-            "J: J",
-            "Q: K",
-            "K: L",
-            "A: G",
+            "10: G",
+            "J: H",
+            "Q: J",
+            "K: K",
+            "A: L",
         ]
         hotkeys = (
             "Low (+1): A, -, Left Arrow",
