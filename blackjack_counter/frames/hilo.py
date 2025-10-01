@@ -47,8 +47,16 @@ class HiLoFrame(BaseModeFrame):
                 "title": "Minus / Plus",
                 "low_label": "-",
                 "hi_label": "+",
-                "low_sequences": ("<KeyPress-minus>", "<minus>"),
-                "hi_sequences": ("<KeyPress-plus>", "<plus>"),
+                "low_sequences": ("<KeyPress-minus>", "<minus>", "<KeyPress-KP_Subtract>", "<KP_Subtract>"),
+                "hi_sequences": (
+                    "<KeyPress-plus>",
+                    "<plus>",
+                    "<KeyPress-equal>",
+                    "<equal>",
+                    "<KeyPress-KP_Add>",
+                    "<KP_Add>",
+                ),
+                "hi_expected_char": "+",
             },
             {
                 "name": "horizontal_arrows",
@@ -204,18 +212,33 @@ class HiLoFrame(BaseModeFrame):
             if enabled:
                 self._bind_hotkey_group(name)
 
+    def _char_filtered_handler(self, handler, expected_char: str):
+        """Return a handler that only fires when the expected char is pressed."""
+        def _filtered(event):
+            if getattr(event, "char", "") != expected_char:
+                return None
+            return handler(event)
+
+        return _filtered
+
     def _bind_hotkey_group(self, name: str) -> None:
         self._unbind_hotkey_group(name)
 
         group = self._hotkey_lookup[name]
         bindings: List[Tuple[str, str]] = []
 
+        low_expected = group.get("low_expected_char")
+        low_handler = self._handle_low_key if low_expected is None else self._char_filtered_handler(self._handle_low_key, low_expected)
+
+        hi_expected = group.get("hi_expected_char")
+        hi_handler = self._handle_hi_key if hi_expected is None else self._char_filtered_handler(self._handle_hi_key, hi_expected)
+
         for sequence in group["low_sequences"]:
-            funcid = self._bind_shortcut(sequence, self._handle_low_key)
+            funcid = self._bind_shortcut(sequence, low_handler)
             bindings.append((sequence, funcid))
 
         for sequence in group["hi_sequences"]:
-            funcid = self._bind_shortcut(sequence, self._handle_hi_key)
+            funcid = self._bind_shortcut(sequence, hi_handler)
             bindings.append((sequence, funcid))
 
         self._group_bindings[name].extend(bindings)
