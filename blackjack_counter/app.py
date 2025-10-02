@@ -4,6 +4,9 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Dict, Optional
 
+from pathlib import Path
+import sys
+
 from blackjack_counter.frames.hilo import HiLoFrame
 from blackjack_counter.frames.menu import ModeSelection, StartMenu
 from blackjack_counter.frames.wong import WongHalvesFrame
@@ -19,6 +22,8 @@ class CountingApp(tk.Tk):
         self.geometry("1100x640")
         self.minsize(960, 540)
 
+        self._icon_image: Optional[tk.PhotoImage] = None
+        self._apply_icon()
         self._init_style()
 
         container = ttk.Frame(self)
@@ -61,3 +66,28 @@ class CountingApp(tk.Tk):
         if hasattr(frame, "set_state"):
             frame.set_state(CountingState(decks=decks))  # type: ignore[attr-defined]
         self.show_frame(frame_name)
+
+    def _apply_icon(self) -> None:
+        """Attach the table icon to the window when available."""
+
+        icon_path = self._find_asset('blackjack_by_smashingstocks.png')
+        if icon_path is None:
+            return
+        try:
+            icon = tk.PhotoImage(file=str(icon_path))
+        except tk.TclError:
+            return
+        self._icon_image = icon
+        self.iconphoto(True, icon)
+
+    def _find_asset(self, filename: str) -> Optional[Path]:
+        """Resolve asset path both in dev and PyInstaller bundles."""
+
+        candidates = []
+        if hasattr(sys, '_MEIPASS'):
+            candidates.append(Path(sys._MEIPASS) / 'assets' / filename)
+        candidates.append(Path(__file__).resolve().parent.parent / 'assets' / filename)
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return None
