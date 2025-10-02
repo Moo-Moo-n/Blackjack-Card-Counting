@@ -61,6 +61,7 @@ class WongHalvesFrame(BaseModeFrame):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=5)
         self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=0)
 
         self._build_layout()
 
@@ -150,6 +151,16 @@ class WongHalvesFrame(BaseModeFrame):
                 command=lambda c=card, v=value: self._record_card(c, v),
             ).grid(row=0, column=index, padx=2, pady=2, sticky="nsew")
 
+        bottom_bar = ttk.Frame(self, padding=(6, 4))
+        bottom_bar.grid(row=2, column=0, sticky="ew")
+        bottom_bar.columnconfigure(0, weight=2)
+        bottom_bar.columnconfigure(1, weight=0)
+        bottom_bar.columnconfigure(2, weight=3)
+
+        ttk.Frame(bottom_bar).grid(row=0, column=0, sticky="ew")
+        ttk.Frame(bottom_bar).grid(row=0, column=2, sticky="ew")
+
+        self._place_bottom_illustration(bottom_bar, column=1)
     def _record_card(self, card: str, value: float) -> None:
         """Log the fractional Wong Halves value for the chosen card rank."""
         if not self.state:

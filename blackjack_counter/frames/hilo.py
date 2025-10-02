@@ -171,6 +171,17 @@ class HiLoFrame(BaseModeFrame):
             command=lambda: self._record("Hi", -1.0),
         )
         self.hi_button.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        bottom_bar = ttk.Frame(self, padding=(6, 4))
+        bottom_bar.grid(row=1, column=0, columnspan=4, sticky="ew")
+        bottom_bar.columnconfigure(0, weight=2)
+        bottom_bar.columnconfigure(1, weight=0)
+        bottom_bar.columnconfigure(2, weight=3)
+
+        ttk.Frame(bottom_bar).grid(row=0, column=0, sticky="ew")
+        ttk.Frame(bottom_bar).grid(row=0, column=2, sticky="ew")
+
+        self._place_bottom_illustration(bottom_bar, column=1)
+
 
     def _record(self, label: str, value: float) -> None:
         """Store the Hi-Lo adjustment so the shared state can update counts."""
@@ -367,6 +378,7 @@ class HiLoFrame(BaseModeFrame):
         window.focus_force()
 
         self._hotkey_window = window
+
 
 
 

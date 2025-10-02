@@ -1,4 +1,4 @@
-"""Shared frame utilities for the different counting modes."""
+﻿"""Shared frame utilities for the different counting modes."""
 
 import tkinter as tk
 from tkinter import ttk
@@ -29,6 +29,7 @@ class BaseModeFrame(ttk.Frame):
         self.undo_button: Optional[ttk.Button] = None
         self.redo_button: Optional[ttk.Button] = None
 
+        self._girl_label: Optional[ttk.Label] = None
         self._shortcut_bindings: List[Tuple[str, str]] = []
 
     def set_state(self, state: CountingState) -> None:
@@ -76,8 +77,14 @@ class BaseModeFrame(ttk.Frame):
         container.bind("<Configure>", _sync_wrap, add="+")
         container.after_idle(lambda: label.configure(wraplength=max(60, container.winfo_width() - padding)))
 
-
-    def _freeze_panel_width(self, panel: tk.Widget, *, column_manager: tk.Widget, column_index: int, inner: Optional[tk.Widget] = None) -> None:
+    def _freeze_panel_width(
+        self,
+        panel: tk.Widget,
+        *,
+        column_manager: tk.Widget,
+        column_index: int,
+        inner: Optional[tk.Widget] = None,
+    ) -> None:
         """Keep a panel from growing wider than its initial width."""
 
         if getattr(panel, "_width_locked", False):
@@ -107,6 +114,25 @@ class BaseModeFrame(ttk.Frame):
             panel._width_locked = True  # type: ignore[attr-defined]
 
         panel.after_idle(_capture_width)
+
+    def _place_bottom_illustration(
+        self,
+        parent: ttk.Frame,
+        *,
+        column: int = 0,
+        columnspan: int = 1,
+        sticky: str = "sw",
+    ) -> None:
+        """Attach the shared illustration to the supplied parent container."""
+
+        image = getattr(self.controller, "girl_image", None)
+        if not image:
+            return
+
+        label = ttk.Label(parent, image=image)
+        label.image = image
+        label.grid(row=0, column=column, columnspan=columnspan, sticky=sticky)
+        self._girl_label = label
 
     def _reset_shoe(self) -> None:
         """Clear the shoe back to an empty state."""
@@ -139,9 +165,7 @@ class BaseModeFrame(ttk.Frame):
 
         self.controller.show_frame("ModeSelection")
 
-
     def _bind_shortcut(self, sequence: str, callback) -> str:
-
         """Register a keyboard shortcut and track it for later cleanup."""
 
         funcid = self.controller.bind(sequence, callback, add="+")
@@ -159,7 +183,6 @@ class BaseModeFrame(ttk.Frame):
                 self._shortcut_bindings.remove((sequence, funcid))
             except ValueError:
                 pass
-
 
     def on_show(self) -> None:
         """Prepare the frame when it becomes visible."""
@@ -186,5 +209,4 @@ class BaseModeFrame(ttk.Frame):
         for sequence, funcid in self._shortcut_bindings:
             self.controller.unbind(sequence, funcid)
         self._shortcut_bindings.clear()
-
 

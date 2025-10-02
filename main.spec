@@ -1,11 +1,11 @@
-# -*- mode: python ; coding: utf-8 -*-
+﻿# -*- mode: python ; coding: utf-8 -*-
 
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets/blackjack_by_freepik.png', 'assets')],
+    datas=[('assets/blackjack_by_freepik.png', 'assets'), ('assets/torta_girl.png', 'assets')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -37,4 +37,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
 

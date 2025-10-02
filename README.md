@@ -46,6 +46,4 @@ If you need to tweak the packaging further, edit main.spec to match your prefere
 
 ## Credits
 - Icon by Freepik: <a href="https://www.flaticon.com/free-icons/gambling" title="gambling icons">Gambling icons created by Freepik - Flaticon</a>.
-
-Happy practicing!
-
+- Girl illustration by [Ralusek](https://www.redbubble.com/people/ralusek/shop).
