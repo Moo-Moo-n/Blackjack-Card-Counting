@@ -3,7 +3,6 @@
 # Wong Halves counting notes:
 # - Each rank has a half-step weight (e.g., 5 = +1.5, 9 = -0.5) to better model the shoe.
 # - The buttons for 2 through A add those fractional adjustments to the running count.
-# - We keep the low/high shortcuts so players can apply generic +1/-1 presses as needed.
 
 
 import tkinter as tk
@@ -104,14 +103,13 @@ class WongHalvesFrame(BaseModeFrame):
         self._bind_wraplength(history_label, history_box)
         self._freeze_panel_width(history_frame, column_manager=top_panel, column_index=1, inner=history_box)
 
-        self.low_button = ttk.Button(
+        ttk.Label(
             history_frame,
-
-            text="Low (+1)",
-
-            command=lambda: self._record_generic("Low", 1.0),
-        )
-        self.low_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
+            text="Use the card buttons or their shortcuts to record counts.",
+            style="Caption.TLabel",
+            anchor="center",
+            justify="center",
+        ).grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
         true_frame = ttk.Frame(top_panel, padding=(10, 0))
         true_frame.grid(row=0, column=2, sticky="nsew")
@@ -133,14 +131,6 @@ class WongHalvesFrame(BaseModeFrame):
         running_box = ttk.LabelFrame(running_frame, text="Running Count", padding=10)
         running_box.grid(row=0, column=0, sticky="nsew")
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
-        self.hi_button = ttk.Button(
-            running_frame,
-
-            text="Hi (-1)",
-
-            command=lambda: self._record_generic("Hi", -1.0),
-        )
-        self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
 
         for column in range(len(self.CARD_VALUES)):
             bottom_panel.columnconfigure(column, weight=1, uniform="cards")
@@ -160,13 +150,6 @@ class WongHalvesFrame(BaseModeFrame):
                 command=lambda c=card, v=value: self._record_card(c, v),
             ).grid(row=0, column=index, padx=2, pady=3, sticky="nsew")
 
-    def _record_generic(self, label: str, value: float) -> None:
-        """Record a quick +1/-1 adjustment alongside card-specific presses."""
-        if not self.state:
-            return
-        self.state.record(label, value)
-        self.refresh()
-
     def _record_card(self, card: str, value: float) -> None:
         """Log the fractional Wong Halves value for the chosen card rank."""
         if not self.state:
@@ -176,33 +159,6 @@ class WongHalvesFrame(BaseModeFrame):
 
     def on_show(self) -> None:
         super().on_show()
-
-        def _wrap_generic(label: str, value: float):
-            def handler(event):
-                self._record_generic(label, value)
-                return "break"
-
-
-            return handler
-
-        for sequence in (
-            "<KeyPress-a>",
-            "<KeyPress-A>",
-            "<KeyPress-minus>",
-            "<minus>",
-            "<Left>",
-        ):
-            self._bind_shortcut(sequence, _wrap_generic("Low", 1.0))
-
-        for sequence in (
-            "<KeyPress-d>",
-            "<KeyPress-D>",
-            "<KeyPress-plus>",
-            "<plus>",
-            "<Right>",
-        ):
-
-            self._bind_shortcut(sequence, _wrap_generic("Hi", -1.0))
 
         for card, keys in self.CARD_KEY_BINDINGS.items():
             value = self.CARD_VALUES[card]
@@ -264,8 +220,6 @@ class WongHalvesFrame(BaseModeFrame):
         ttk.Label(
             actions,
             text=(
-                "Low (+1): A, -, Left Arrow\n"
-                "Hi (-1): D, +, Right Arrow\n"
                 "Undo: <, ,, Ctrl+Z\n"
                 "Redo: >, ., Ctrl+Shift+Z\n"
                 "Reset Shoe: Ctrl+R"
