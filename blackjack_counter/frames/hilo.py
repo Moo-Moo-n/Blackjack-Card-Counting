@@ -57,8 +57,9 @@ class HiLoFrame(BaseModeFrame):
                     "<KeyPress-KP_Add>",
                     "<KP_Add>",
                 ),
-                "hi_expected_char": "+",
+
                 "hi_expected_keysyms": ("plus", "equal", "KP_Add"),
+
             },
             {
                 "name": "horizontal_arrows",
