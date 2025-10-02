@@ -25,6 +25,7 @@ class HiLoFrame(BaseModeFrame):
 
         self._is_active = False
         self._hotkey_window: Optional[tk.Toplevel] = None
+        # Hotkey definitions live here; tweak sequences/filters below before they get bound.
         self._hotkey_groups = [
             {
                 "name": "letters",
@@ -57,6 +58,7 @@ class HiLoFrame(BaseModeFrame):
                     "<KP_Add>",
                 ),
                 "hi_expected_keysyms": ("plus", "equal", "KP_Add"),
+
             },
             {
                 "name": "horizontal_arrows",
@@ -366,4 +368,7 @@ class HiLoFrame(BaseModeFrame):
         window.focus_force()
 
         self._hotkey_window = window
+
+
+
 
