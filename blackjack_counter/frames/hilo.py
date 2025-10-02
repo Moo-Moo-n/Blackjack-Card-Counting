@@ -57,7 +57,6 @@ class HiLoFrame(BaseModeFrame):
                     "<KeyPress-KP_Add>",
                     "<KP_Add>",
                 ),
-
                 "hi_expected_keysyms": ("plus", "equal", "KP_Add"),
 
             },
@@ -233,8 +232,6 @@ class HiLoFrame(BaseModeFrame):
         self._unbind_hotkey_group(name)
 
         group = self._hotkey_lookup[name]
-        bindings: List[Tuple[str, str]] = []
-
         low_expected_char = group.get("low_expected_char")
         low_expected_keysyms: Tuple[str, ...] = tuple(group.get("low_expected_keysyms", ()))
         if low_expected_char is None and not low_expected_keysyms:
@@ -257,14 +254,17 @@ class HiLoFrame(BaseModeFrame):
                 expected_keysyms=hi_expected_keysyms,
             )
 
-        # Tk hotkey bindings are registered here; inspect this spot when tracking key behavior.\r\n            funcid = self._bind_shortcut(sequence, low_handler)
-            bindings.append((sequence, funcid))
+        bindings: List[Tuple[str, str]] = []
 
-        for sequence in group["hi_sequences"]:
-            funcid = self._bind_shortcut(sequence, hi_handler)
-            bindings.append((sequence, funcid))
+        for seq in group["low_sequences"]:
+            funcid = self._bind_shortcut(seq, low_handler)
+            bindings.append((seq, funcid))
 
-        self._group_bindings[name].extend(bindings)
+        for seq in group["hi_sequences"]:
+            funcid = self._bind_shortcut(seq, hi_handler)
+            bindings.append((seq, funcid))
+
+        self._group_bindings[name] = bindings
 
     def _unbind_hotkey_group(self, name: str) -> None:
         bindings = self._group_bindings.get(name)
