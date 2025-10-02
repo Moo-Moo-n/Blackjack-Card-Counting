@@ -25,6 +25,7 @@ class HiLoFrame(BaseModeFrame):
 
         self._is_active = False
         self._hotkey_window: Optional[tk.Toplevel] = None
+        # Hotkey definitions live here; tweak sequences/filters below before they get bound.
         self._hotkey_groups = [
             {
                 "name": "letters",
@@ -57,7 +58,7 @@ class HiLoFrame(BaseModeFrame):
                     "<KP_Add>",
                 ),
                 "hi_expected_char": "+",
-                "hi_expected_keysyms": ("plus", "KP_Add"),
+                "hi_expected_keysyms": ("plus", "equal", "KP_Add"),
             },
             {
                 "name": "horizontal_arrows",
@@ -255,8 +256,7 @@ class HiLoFrame(BaseModeFrame):
                 expected_keysyms=hi_expected_keysyms,
             )
 
-        for sequence in group["low_sequences"]:
-            funcid = self._bind_shortcut(sequence, low_handler)
+        # Tk hotkey bindings are registered here; inspect this spot when tracking key behavior.\r\n            funcid = self._bind_shortcut(sequence, low_handler)
             bindings.append((sequence, funcid))
 
         for sequence in group["hi_sequences"]:
@@ -367,4 +367,7 @@ class HiLoFrame(BaseModeFrame):
         window.focus_force()
 
         self._hotkey_window = window
+
+
+
 
