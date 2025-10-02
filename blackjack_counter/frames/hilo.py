@@ -105,21 +105,21 @@ class HiLoFrame(BaseModeFrame):
 
     def _build_controls(self) -> None:
         control_frame = ttk.Frame(self)
-        control_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        control_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
 
         self.reset_button = ttk.Button(control_frame, text="Reset Shoe [Ctrl+R]", command=self._reset_shoe)
-        self.reset_button.pack(fill="x", pady=(0, 10))
+        self.reset_button.pack(fill="x", pady=(0, 6))
         self.menu_button = ttk.Button(control_frame, text="Menu", command=self._go_menu)
         self.menu_button.pack(fill="x")
 
         self.hotkey_button = ttk.Button(control_frame, text="Hotkeys…", command=self._show_hotkeys)
-        self.hotkey_button.pack(fill="x", pady=(10, 0))
+        self.hotkey_button.pack(fill="x", pady=(6, 0))
 
-        history_frame = ttk.Frame(self, padding=(10, 0))
+        history_frame = ttk.Frame(self, padding=(6, 0))
         history_frame.grid(row=0, column=1, sticky="nsew")
         history_frame.columnconfigure(0, weight=1)
 
-        history_box = ttk.LabelFrame(history_frame, text="Previously Counted", padding=10)
+        history_box = ttk.LabelFrame(history_frame, text="Previously Counted", padding=8)
         history_box.grid(row=0, column=0, sticky="nsew")
         history_label = ttk.Label(
             history_box,
@@ -139,27 +139,27 @@ class HiLoFrame(BaseModeFrame):
 
             command=lambda: self._record("Low", 1.0),
         )
-        self.low_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
+        self.low_button.grid(row=1, column=0, sticky="ew", pady=(8, 0))
 
-        true_frame = ttk.Frame(self, padding=(10, 0))
+        true_frame = ttk.Frame(self, padding=(6, 0))
         true_frame.grid(row=0, column=2, sticky="nsew")
         true_frame.columnconfigure(0, weight=1)
 
-        true_box = ttk.LabelFrame(true_frame, text="True Count", padding=10)
+        true_box = ttk.LabelFrame(true_frame, text="True Count", padding=8)
         true_box.grid(row=0, column=0, sticky="nsew")
         ttk.Label(true_box, textvariable=self.true_var, style="Value.TLabel", anchor="center").pack(fill="x")
-        ttk.Label(true_box, textvariable=self.cards_var, style="Caption.TLabel", anchor="center").pack(fill="x", pady=(8, 0))
+        ttk.Label(true_box, textvariable=self.cards_var, style="Caption.TLabel", anchor="center").pack(fill="x", pady=(6, 0))
 
         self.undo_button = ttk.Button(true_frame, text="Undo [< / Ctrl+Z]", command=self._undo_entry)
-        self.undo_button.grid(row=1, column=0, sticky="ew", pady=(12, 6))
+        self.undo_button.grid(row=1, column=0, sticky="ew", pady=(8, 4))
         self.redo_button = ttk.Button(true_frame, text="Redo [> / Ctrl+Shift+Z]", command=self._redo_entry)
         self.redo_button.grid(row=2, column=0, sticky="ew")
 
-        running_frame = ttk.Frame(self, padding=(10, 0))
+        running_frame = ttk.Frame(self, padding=(6, 0))
         running_frame.grid(row=0, column=3, sticky="nsew")
         running_frame.columnconfigure(0, weight=1)
 
-        running_box = ttk.LabelFrame(running_frame, text="Running Count", padding=10)
+        running_box = ttk.LabelFrame(running_frame, text="Running Count", padding=8)
         running_box.grid(row=0, column=0, sticky="nsew")
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
 
@@ -170,7 +170,7 @@ class HiLoFrame(BaseModeFrame):
 
             command=lambda: self._record("Hi", -1.0),
         )
-        self.hi_button.grid(row=1, column=0, sticky="ew", pady=(12, 0))
+        self.hi_button.grid(row=1, column=0, sticky="ew", pady=(8, 0))
 
     def _record(self, label: str, value: float) -> None:
         """Store the Hi-Lo adjustment so the shared state can update counts."""

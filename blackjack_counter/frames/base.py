@@ -15,7 +15,7 @@ class BaseModeFrame(ttk.Frame):
     """Base layout that provides shared controls and data binding."""
 
     def __init__(self, master: ttk.Frame, controller: "CountingApp", **kwargs) -> None:
-        super().__init__(master, padding=20, **kwargs)
+        super().__init__(master, padding=12, **kwargs)
         self.controller = controller
         self.state: Optional[CountingState] = None
 

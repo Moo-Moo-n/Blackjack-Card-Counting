@@ -20,7 +20,6 @@ class CountingApp(tk.Tk):
         super().__init__()
         self.title("Blackjack Counter")
         self.geometry("1100x640")
-        self.minsize(960, 540)
 
         self._icon_image: Optional[tk.PhotoImage] = None
         self._apply_icon()
@@ -70,7 +69,7 @@ class CountingApp(tk.Tk):
     def _apply_icon(self) -> None:
         """Attach the table icon to the window when available."""
 
-        icon_path = self._find_asset('blackjack_by_smashingstocks.png')
+        icon_path = self._find_asset('blackjack_by_freepik.png')
         if icon_path is None:
             return
         try:
@@ -91,3 +90,4 @@ class CountingApp(tk.Tk):
             if candidate.exists():
                 return candidate
         return None
+

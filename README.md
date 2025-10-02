@@ -45,6 +45,7 @@ If you need to tweak the packaging further, edit main.spec to match your prefere
 - Undo removes the most recent entry (card or low/high press) so the history and counts always stay in sync.
 
 ## Credits
-- Table icon by [Smashingstocks](https://www.flaticon.com/authors/smashingstocks) via [Flaticon](https://www.flaticon.com/free-icons/blackjack).
+- Icon by Freepik: <a href="https://www.flaticon.com/free-icons/gambling" title="gambling icons">Gambling icons created by Freepik - Flaticon</a>.
 
 Happy practicing!
+

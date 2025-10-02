@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets/blackjack_by_smashingstocks.png', 'assets')],
+    datas=[('assets/blackjack_by_freepik.png', 'assets')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -30,10 +30,11 @@ exe = EXE(
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
-    icon='assets/blackjack_by_smashingstocks.ico',
+    icon='assets/blackjack_by_freepik.ico',
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
 )
+
