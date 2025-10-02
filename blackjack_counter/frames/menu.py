@@ -17,7 +17,8 @@ class StartMenu(ttk.Frame):
         column = ttk.Frame(self)
         column.pack(expand=True)
 
-        ttk.Label(column, text="Manual Blackjack Counter", style="Headline.TLabel").pack(pady=(0, 20))
+        ttk.Label(column, text="Manual Blackjack Counter", style="Headline.TLabel").pack(pady=(0, 4))
+        ttk.Label(column, text="by MooMoon", style="Subheadline.TLabel").pack(pady=(0, 20))
         ttk.Button(column, text="New Game", command=self._open_mode_selection, width=20).pack()
 
     def _open_mode_selection(self) -> None:
@@ -48,3 +49,4 @@ class ModeSelection(ttk.Frame):
 
     def _go_back(self) -> None:
         self.controller.show_frame("StartMenu")
+
