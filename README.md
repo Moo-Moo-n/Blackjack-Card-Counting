@@ -4,9 +4,9 @@ A lightweight desktop helper that lets you practice and run two common blackjack
 
 ## Project structure
 - main.py keeps the entry point tiny and easy to read.
-- lackjack_counter/app.py wires up the window, navigation, and shared styling.
-- lackjack_counter/state.py and lackjack_counter/formatting.py hold the core logic.
-- lackjack_counter/frames/ contains the reusable base frame plus one module per screen.
+- \blackjack_counter/app.py wires up the window, navigation, and shared styling.
+- \blackjack_counter/state.py and \blackjack_counter/formatting.py hold the core logic.
+- \blackjack_counter/frames/ contains the reusable base frame plus one module per screen.
 
 ## Features
 - Start menu with quick access to each counting mode.
@@ -31,17 +31,20 @@ The app has no external dependencies beyond the standard library, so you can bun
    `powershell
    pip install pyinstaller
    `
-2. Build a single-file, windowed executable:
+2. Build the packaged executable with the provided spec (adds the icon and friendly file name):
    `powershell
-   pyinstaller --onefile --windowed main.py
+   pyinstaller main.spec
    `
-3. Your distributable executable will be under dist\main.exe. Share that file with friends; they will not need Python installed.
+3. Your distributable executable will be under dist\Blackjack Counter.exe. Share that file with friends; they will not need Python installed.
 
-If you want to customize the executable name or icon, PyInstaller flags such as --name and --icon work as usual.
+If you need to tweak the packaging further, edit main.spec to match your preferences.
 
 ## Notes & tips
 - The counter assumes a six-deck shoe. You can change the deck estimate in code by passing a different value to start_mode if you prefer another baseline.
 - The true count will never divide by fewer than a quarter-deck to avoid extreme spikes once the shoe runs out.
 - Undo removes the most recent entry (card or low/high press) so the history and counts always stay in sync.
+
+## Credits
+- Table icon by [Smashingstocks](https://www.flaticon.com/authors/smashingstocks) via [Flaticon](https://www.flaticon.com/free-icons/blackjack).
 
 Happy practicing!

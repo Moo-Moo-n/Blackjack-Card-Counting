@@ -21,6 +21,8 @@ class StartMenu(ttk.Frame):
         ttk.Label(column, text="by MooMoon", style="Subheadline.TLabel").pack(pady=(0, 20))
         ttk.Button(column, text="New Game", command=self._open_mode_selection, width=20).pack()
 
+        ttk.Label(self, text="Icon by Smashingstocks on Flaticon", style="Caption.TLabel").pack(side="bottom", pady=(20, 0))
+
     def _open_mode_selection(self) -> None:
         self.controller.show_frame("ModeSelection")
 
