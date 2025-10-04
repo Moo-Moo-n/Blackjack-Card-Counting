@@ -1,4 +1,4 @@
-﻿"""Frame that implements the Hi-Lo counting layout."""
+"""Frame that implements the Hi-Lo counting layout."""
 
 # Hi-Lo counting notes:
 # - Cards ranked 2 through 6 are considered "low" and add +1 to the running count.
@@ -99,7 +99,7 @@ class HiLoFrame(BaseModeFrame):
         self.columnconfigure(1, weight=2)
         self.columnconfigure(2, weight=1)
         self.columnconfigure(3, weight=1)
-        self.rowconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
 
         self._build_controls()
 
@@ -132,15 +132,6 @@ class HiLoFrame(BaseModeFrame):
         self._bind_wraplength(history_label, history_box)
         self._freeze_panel_width(history_frame, column_manager=self, column_index=1, inner=history_box)
 
-        self.low_button = ttk.Button(
-            history_frame,
-
-            text="Low (+1)",
-
-            command=lambda: self._record("Low", 1.0),
-        )
-        self.low_button.grid(row=1, column=0, sticky="ew", pady=(8, 0))
-
         true_frame = ttk.Frame(self, padding=(6, 0))
         true_frame.grid(row=0, column=2, sticky="nsew")
         true_frame.columnconfigure(0, weight=1)
@@ -163,16 +154,43 @@ class HiLoFrame(BaseModeFrame):
         running_box.grid(row=0, column=0, sticky="nsew")
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
 
+        button_section = ttk.Frame(running_frame)
+        button_section.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        button_section.columnconfigure(0, weight=1)
+        button_section.columnconfigure(1, weight=1)
+
+        ttk.Label(
+            button_section,
+            text="Lo cards: 2, 3, 4, 5, 6",
+            style="Caption.TLabel",
+            anchor="center",
+        ).grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        ttk.Label(
+            button_section,
+            text="Hi cards: 10, J, Q, K, A",
+            style="Caption.TLabel",
+            anchor="center",
+        ).grid(row=0, column=1, sticky="ew", padx=(4, 0))
+
+        self.low_button = ttk.Button(
+            button_section,
+
+            text="Low (+1)",
+
+            command=lambda: self._record("Low", 1.0),
+        )
+        self.low_button.grid(row=1, column=0, sticky="ew", padx=(0, 4), pady=(4, 0))
+
         self.hi_button = ttk.Button(
-            running_frame,
+            button_section,
 
             text="Hi (-1)",
 
             command=lambda: self._record("Hi", -1.0),
         )
-        self.hi_button.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        self.hi_button.grid(row=1, column=1, sticky="ew", padx=(4, 0), pady=(4, 0))
         bottom_bar = ttk.Frame(self, padding=(6, 4))
-        bottom_bar.grid(row=1, column=0, columnspan=4, sticky="sew")
+        bottom_bar.grid(row=1, column=0, columnspan=4, sticky="ew")
         bottom_bar.columnconfigure(0, weight=2)
         bottom_bar.columnconfigure(1, weight=0)
         bottom_bar.columnconfigure(2, weight=3)
@@ -180,10 +198,10 @@ class HiLoFrame(BaseModeFrame):
         ttk.Frame(bottom_bar).grid(row=0, column=0, sticky="ew")
         ttk.Frame(bottom_bar).grid(row=0, column=2, sticky="ew")
 
-        self._place_bottom_illustration(bottom_bar, column=1, width_ratio=0.24)
+        self._place_bottom_illustration(bottom_bar, column=1)
 
-        self.after_idle(self._register_button_widths)
-\n    def _record(self, label: str, value: float) -> None:
+
+    def _record(self, label: str, value: float) -> None:
         """Store the Hi-Lo adjustment so the shared state can update counts."""
         if not self.state:
             return
@@ -378,13 +396,6 @@ class HiLoFrame(BaseModeFrame):
         window.focus_force()
 
         self._hotkey_window = window
-
-
-
-
-
-
-
 
 
 
