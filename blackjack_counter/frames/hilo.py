@@ -198,7 +198,11 @@ class HiLoFrame(BaseModeFrame):
         ttk.Frame(bottom_bar).grid(row=0, column=0, sticky="ew")
         ttk.Frame(bottom_bar).grid(row=0, column=2, sticky="ew")
 
-        self._place_bottom_illustration(bottom_bar, column=1)
+        place_illustration = getattr(
+            super(HiLoFrame, self), "_place_bottom_illustration", None
+        )
+        if callable(place_illustration):
+            place_illustration(bottom_bar, column=1)
 
 
     def _record(self, label: str, value: float) -> None:
