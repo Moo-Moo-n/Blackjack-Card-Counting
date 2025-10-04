@@ -25,8 +25,6 @@ class CountingApp(tk.Tk):
         self._apply_icon()
         self._init_style()
 
-        self.girl_image: Optional[tk.PhotoImage] = self._load_girl_image()
-
         container = ttk.Frame(self)
         container.pack(fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
@@ -68,26 +66,6 @@ class CountingApp(tk.Tk):
             frame.set_state(CountingState(decks=decks))  # type: ignore[attr-defined]
         self.show_frame(frame_name)
 
-    def _load_girl_image(self) -> Optional[tk.PhotoImage]:
-        """Load the girl illustration for reuse across frames."""
-
-        asset_path = self._find_asset('torta_girl.png')
-        if asset_path is None:
-            return None
-
-        try:
-            image = tk.PhotoImage(file=str(asset_path))
-        except tk.TclError:
-            return None
-
-        max_height = 220
-        height = image.height()
-        if height > max_height:
-            scale = max(1, height // max_height)
-            image = image.subsample(scale, scale)
-
-        return image
-
     def _apply_icon(self) -> None:
         """Attach the table icon to the window when available."""
 
@@ -112,7 +90,5 @@ class CountingApp(tk.Tk):
             if candidate.exists():
                 return candidate
         return None
-
-
 
 
