@@ -1,4 +1,4 @@
-"""Frame that implements the Wong Halves counting layout."""
+﻿"""Frame that implements the Wong Halves counting layout."""
 
 # Wong Halves counting notes:
 # - Each rank has a half-step weight (e.g., 5 = +1.5, 9 = -0.5) to better model the shoe.
@@ -138,21 +138,29 @@ class WongHalvesFrame(BaseModeFrame):
         bottom_panel.rowconfigure(0, weight=1)
 
         cards = list(self.CARD_VALUES.items())
+        sample_button: Optional[ttk.Button] = None
         for index, (card, value) in enumerate(cards):
             hints = " / ".join(key.upper() for key in self.CARD_KEY_BINDINGS.get(card, ()))
             label = f"{card}\n({format_increment(value)})"
             if hints:
                 label += f"\n[{hints}]"
 
-            ttk.Button(
+            button = ttk.Button(
                 bottom_panel,
                 text=label,
                 style="Card.TButton",
                 command=lambda c=card, v=value: self._record_card(c, v),
-            ).grid(row=0, column=index, padx=2, pady=2, sticky="nsew")
+            )
+            button.grid(row=0, column=index, padx=2, pady=2, sticky="nsew")
+
+            if sample_button is None:
+                sample_button = button
+
+        if sample_button is not None:
+            self.after_idle(lambda b=sample_button: self._register_card_button_dimensions(b))
 
         bottom_bar = ttk.Frame(self, padding=(6, 4))
-        bottom_bar.grid(row=2, column=0, sticky="ew")
+        bottom_bar.grid(row=2, column=0, sticky="sew")
         bottom_bar.columnconfigure(0, weight=2)
         bottom_bar.columnconfigure(1, weight=0)
         bottom_bar.columnconfigure(2, weight=3)
@@ -160,7 +168,21 @@ class WongHalvesFrame(BaseModeFrame):
         ttk.Frame(bottom_bar).grid(row=0, column=0, sticky="ew")
         ttk.Frame(bottom_bar).grid(row=0, column=2, sticky="ew")
 
-        self._place_bottom_illustration(bottom_bar, column=1)
+        self._place_bottom_illustration(bottom_bar, column=1, width_ratio=0.22)
+
+    def _register_card_button_dimensions(self, button: ttk.Button) -> None:
+        width = button.winfo_width() or button.winfo_reqwidth()
+        height = button.winfo_height() or button.winfo_reqheight()
+        if width and height:
+            self.controller.update_girl_min_size(int(width), int(height))
+
+        if getattr(self, "_girl_label", None) is not None:
+            label = self._girl_label
+            if label is not None and label.winfo_exists():
+                parent = label.master
+                if parent is not None:
+                    parent.event_generate("<Configure>")
+
     def _record_card(self, card: str, value: float) -> None:
         """Log the fractional Wong Halves value for the chosen card rank."""
         if not self.state:
@@ -265,4 +287,13 @@ class WongHalvesFrame(BaseModeFrame):
         window.focus_force()
 
         self._hotkey_window = window
+
+
+
+
+
+
+
+
+
 
