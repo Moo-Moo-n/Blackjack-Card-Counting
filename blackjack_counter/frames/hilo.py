@@ -20,11 +20,33 @@ if TYPE_CHECKING:  # pragma: no cover - only for type checkers
 class HiLoFrame(BaseModeFrame):
     """Four-column layout with high and low buttons for the Hi-Lo system."""
 
+    LOW_CARD_LABELS: Tuple[str, ...] = ("2", "3", "4", "5", "6")
+    HIGH_CARD_LABELS: Tuple[str, ...] = ("10", "J", "Q", "K", "A")
+    RANK_MODE_ENTRIES: Tuple[Tuple[str, str, str], ...] = (
+        ("2", "2", "low"),
+        ("3", "3", "low"),
+        ("4", "4", "low"),
+        ("5", "5", "low"),
+        ("6", "6", "low"),
+        ("7", "7", "neutral"),
+        ("8", "8", "neutral"),
+        ("9", "9", "neutral"),
+        ("0", "10", "hi"),
+        ("q", "J", "hi"),
+        ("w", "Q", "hi"),
+        ("e", "K", "hi"),
+        ("1", "A", "hi"),
+    )
+
     def __init__(self, master: ttk.Frame, controller: "CountingApp") -> None:
         super().__init__(master, controller)
 
         self._is_active = False
         self._hotkey_window: Optional[tk.Toplevel] = None
+        self._rank_mode_var = tk.BooleanVar(master=self, value=False)
+        self._rank_bindings: List[Tuple[str, str]] = []
+        self._rank_mode_active = False
+        self._rank_info_label: Optional[ttk.Label] = None
         # Hotkey definitions live here; tweak sequences/filters below before they get bound.
         self._hotkey_groups = [
             {
@@ -118,6 +140,7 @@ class HiLoFrame(BaseModeFrame):
         history_frame = ttk.Frame(self, padding=(6, 0))
         history_frame.grid(row=0, column=1, sticky="nsew")
         history_frame.columnconfigure(0, weight=1)
+        history_frame.rowconfigure(0, weight=1)
 
         history_box = ttk.LabelFrame(history_frame, text="Previously Counted", padding=8)
         history_box.grid(row=0, column=0, sticky="nsew")
@@ -130,20 +153,57 @@ class HiLoFrame(BaseModeFrame):
         )
         history_label.pack(fill="x")
         self._bind_wraplength(history_label, history_box)
-        self._freeze_panel_width(history_frame, column_manager=self, column_index=1, inner=history_box)
+
+        reference_frame = ttk.Frame(history_frame)
+        reference_frame.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        reference_frame.columnconfigure(0, weight=1)
+        reference_frame.columnconfigure(1, weight=1)
+
+        low_frame = ttk.LabelFrame(reference_frame, text="Low Cards (+1)", padding=6)
+        low_frame.grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        ttk.Label(
+            low_frame,
+            text=" ".join(self.LOW_CARD_LABELS),
+            anchor="center",
+            justify="center",
+        ).pack(fill="x")
+
+        high_frame = ttk.LabelFrame(reference_frame, text="High Cards (-1)", padding=6)
+        high_frame.grid(row=0, column=1, sticky="ew", padx=(4, 0))
+        ttk.Label(
+            high_frame,
+            text=" ".join(self.HIGH_CARD_LABELS),
+            anchor="center",
+            justify="center",
+        ).pack(fill="x")
+
+        button_bar = ttk.Frame(history_frame)
+        button_bar.grid(row=2, column=0, sticky="ew", pady=(8, 0))
+        button_bar.columnconfigure(0, weight=1, uniform="history_hi_lo")
+        button_bar.columnconfigure(1, weight=1, uniform="history_hi_lo")
 
         self.low_button = ttk.Button(
-            history_frame,
+            button_bar,
 
             text="Low (+1)",
 
             command=lambda: self._record("Low", 1.0),
         )
-        self.low_button.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        self.low_button.grid(row=0, column=0, sticky="ew", padx=(0, 4))
+
+        self.hi_button = ttk.Button(
+            button_bar,
+
+            text="Hi (-1)",
+
+            command=lambda: self._record("Hi", -1.0),
+        )
+        self.hi_button.grid(row=0, column=1, sticky="ew")
 
         true_frame = ttk.Frame(self, padding=(6, 0))
         true_frame.grid(row=0, column=2, sticky="nsew")
         true_frame.columnconfigure(0, weight=1)
+        true_frame.bind("<Configure>", self._update_history_column_minsize, add="+")
 
         true_box = ttk.LabelFrame(true_frame, text="True Count", padding=8)
         true_box.grid(row=0, column=0, sticky="nsew")
@@ -158,19 +218,12 @@ class HiLoFrame(BaseModeFrame):
         running_frame = ttk.Frame(self, padding=(6, 0))
         running_frame.grid(row=0, column=3, sticky="nsew")
         running_frame.columnconfigure(0, weight=1)
+        running_frame.rowconfigure(0, weight=0)
+        running_frame.rowconfigure(1, weight=1)
 
         running_box = ttk.LabelFrame(running_frame, text="Running Count", padding=8)
-        running_box.grid(row=0, column=0, sticky="nsew")
+        running_box.grid(row=0, column=0, sticky="new")
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
-
-        self.hi_button = ttk.Button(
-            running_frame,
-
-            text="Hi (-1)",
-
-            command=lambda: self._record("Hi", -1.0),
-        )
-        self.hi_button.grid(row=1, column=0, sticky="ew", pady=(8, 0))
 
     def _record(self, label: str, value: float) -> None:
         """Store the Hi-Lo adjustment so the shared state can update counts."""
@@ -178,6 +231,95 @@ class HiLoFrame(BaseModeFrame):
             return
         self.state.record(label, value)
         self.refresh()
+
+    def _update_history_column_minsize(self, event: tk.Event) -> None:
+        """Keep the history column allowed to shrink down to the true-count width."""
+
+        width = max(1, event.width)
+        self.columnconfigure(1, minsize=width)
+
+    def _toggle_rank_mode(self) -> None:
+        """Enable or disable rank-based shortcuts based on the checkbox state."""
+
+        enabled = self._rank_mode_var.get()
+        if enabled:
+            if self._is_active:
+                self._bind_rank_keys()
+        else:
+            self._unbind_rank_keys()
+        self._refresh_rank_mode_ui()
+
+    def _bind_rank_keys(self) -> None:
+        """Attach key bindings for each rank-to-action mapping."""
+
+        if self._rank_mode_active:
+            return
+
+        self._rank_bindings = []
+
+        for key, _card, category in self.RANK_MODE_ENTRIES:
+            if category == "low":
+                handler = self._handle_low_key
+            elif category == "hi":
+                handler = self._handle_hi_key
+            else:
+                continue
+
+            sequences = [f"<KeyPress-{key}>"]
+            if key.isalpha():
+                sequences.append(f"<KeyPress-{key.upper()}>")
+
+            for sequence in sequences:
+                funcid = self._bind_shortcut(sequence, handler)
+                self._rank_bindings.append((sequence, funcid))
+
+        self._rank_mode_active = True
+
+    def _unbind_rank_keys(self) -> None:
+        """Remove rank-based key bindings if they are active."""
+
+        if not self._rank_bindings:
+            self._rank_mode_active = False
+            return
+
+        for sequence, funcid in self._rank_bindings:
+            self._unbind_shortcut(sequence, funcid)
+
+        self._rank_bindings = []
+        self._rank_mode_active = False
+
+    def _refresh_rank_mode_ui(self) -> None:
+        """Update the descriptive text shown in the rank-mode section."""
+
+        if self._rank_info_label is None:
+            return
+
+        if self._rank_mode_var.get():
+            low_entries: List[str] = []
+            high_entries: List[str] = []
+            neutral_entries: List[str] = []
+
+            for key, card, category in self.RANK_MODE_ENTRIES:
+                key_display = key.upper() if key.isalpha() else key
+                entry = f"{card} [{key_display}]"
+                if category == "low":
+                    low_entries.append(entry)
+                elif category == "hi":
+                    high_entries.append(entry)
+                else:
+                    neutral_entries.append(entry)
+
+            lines = [
+                "Low (+1): " + ", ".join(low_entries),
+                "High (-1): " + ", ".join(high_entries),
+            ]
+            if neutral_entries:
+                lines.append("Neutral (0): " + ", ".join(neutral_entries) + " (no change)")
+            text = "\n".join(lines)
+        else:
+            text = "Enable rank mode to use card-rank shortcuts (2-A)."
+
+        self._rank_info_label.configure(text=text)
 
     def on_show(self) -> None:
         super().on_show()
@@ -188,8 +330,11 @@ class HiLoFrame(BaseModeFrame):
             self._group_bindings[name] = []
 
         self._bind_enabled_hotkeys()
+        if self._rank_mode_var.get():
+            self._bind_rank_keys()
 
     def on_hide(self) -> None:
+        self._unbind_rank_keys()
         self._is_active = False
 
         if self._hotkey_window is not None and self._hotkey_window.winfo_exists():
@@ -294,6 +439,7 @@ class HiLoFrame(BaseModeFrame):
     def _on_hotkey_window_destroy(self, event) -> None:
         if event.widget is self._hotkey_window:
             self._hotkey_window = None
+            self._rank_info_label = None
 
     def _show_hotkeys(self) -> None:
         """Present a toggleable reference of the Hi-Lo keyboard shortcuts."""
@@ -349,18 +495,34 @@ class HiLoFrame(BaseModeFrame):
             )
             check.grid(row=1, column=0, columnspan=2, pady=(8, 0))
 
+        rank_frame = ttk.LabelFrame(container, text="Rank Mode", padding=10)
+        rank_frame.grid(row=2, column=0, sticky="ew", pady=(0, 12))
+        rank_frame.columnconfigure(0, weight=1)
+
+        ttk.Checkbutton(
+            rank_frame,
+            text="Enable rank-based hotkeys (2-A)",
+            variable=self._rank_mode_var,
+            command=self._toggle_rank_mode,
+        ).grid(row=0, column=0, sticky="w")
+
+        self._rank_info_label = ttk.Label(rank_frame, anchor="w", justify="left")
+        self._rank_info_label.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        self._refresh_rank_mode_ui()
+
         actions_frame = ttk.LabelFrame(container, text="Other Controls", padding=10)
-        actions_frame.grid(row=2, column=0, sticky="ew")
+        actions_frame.grid(row=3, column=0, sticky="ew")
         actions_frame.columnconfigure(0, weight=1)
 
         ttk.Label(
             actions_frame,
-            text="Undo: <, ,, Ctrl+Z\nRedo: >, ., Ctrl+Shift+Z\nReset Shoe: Ctrl+R",
+            text="Shortcut hints are shown on each matching button in the main window.",
             justify="left",
+            anchor="w",
         ).grid(row=0, column=0, sticky="w")
 
         ttk.Button(container, text="Close", command=window.destroy).grid(
-            row=3, column=0, sticky="e", pady=(12, 0)
+            row=4, column=0, sticky="e", pady=(12, 0)
         )
 
         window.bind("<Destroy>", self._on_hotkey_window_destroy)

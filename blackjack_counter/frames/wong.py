@@ -46,17 +46,19 @@ class WongHalvesFrame(BaseModeFrame):
         "7": ("s",),
         "8": ("d",),
         "9": ("f",),
-        "10": ("g",),
-        "J": ("z",),
-        "Q": ("x",),
-        "K": ("c",),
-        "A": ("v",),
+        "10": ("z",),
+        "J": ("x",),
+        "Q": ("c",),
+        "K": ("v",),
+        "A": ("b",),
     }
 
     def __init__(self, master: ttk.Frame, controller: "CountingApp") -> None:
         super().__init__(master, controller)
 
         self._hotkey_window: Optional[tk.Toplevel] = None
+        self._history_column_manager: Optional[tk.Misc] = None
+        self._history_column_index: int = 1
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=5)
@@ -76,6 +78,8 @@ class WongHalvesFrame(BaseModeFrame):
         top_panel.columnconfigure(2, weight=1)
         top_panel.columnconfigure(3, weight=1)
         top_panel.rowconfigure(0, weight=1)
+        self._history_column_manager = top_panel
+        self._history_column_index = 1
 
         control_frame = ttk.Frame(top_panel)
         control_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
@@ -101,7 +105,6 @@ class WongHalvesFrame(BaseModeFrame):
         )
         history_label.pack(fill="x")
         self._bind_wraplength(history_label, history_box)
-        self._freeze_panel_width(history_frame, column_manager=top_panel, column_index=1, inner=history_box)
 
         ttk.Label(
             history_frame,
@@ -114,26 +117,29 @@ class WongHalvesFrame(BaseModeFrame):
         true_frame = ttk.Frame(top_panel, padding=(6, 0))
         true_frame.grid(row=0, column=2, sticky="nsew")
         true_frame.columnconfigure(0, weight=1)
+        true_frame.bind("<Configure>", self._update_history_column_minsize, add="+")
 
         true_box = ttk.LabelFrame(true_frame, text="True Count", padding=8)
         true_box.grid(row=0, column=0, sticky="nsew")
         ttk.Label(true_box, textvariable=self.true_var, style="Value.TLabel", anchor="center").pack(fill="x")
         ttk.Label(true_box, textvariable=self.cards_var, style="Caption.TLabel", anchor="center").pack(fill="x", pady=(6, 0))
-        self.undo_button = ttk.Button(true_frame, text="Undo [< / Ctrl+Z]", command=self._undo_entry)
+        self.undo_button = ttk.Button(true_frame, text="Undo [< or Ctrl+Z]", command=self._undo_entry)
         self.undo_button.grid(row=1, column=0, sticky="ew", pady=(8, 4))
-        self.redo_button = ttk.Button(true_frame, text="Redo [> / Ctrl+Shift+Z]", command=self._redo_entry)
+        self.redo_button = ttk.Button(true_frame, text="Redo [> or Ctrl+Y]", command=self._redo_entry)
         self.redo_button.grid(row=2, column=0, sticky="ew")
 
         running_frame = ttk.Frame(top_panel, padding=(6, 0))
         running_frame.grid(row=0, column=3, sticky="nsew")
         running_frame.columnconfigure(0, weight=1)
+        running_frame.rowconfigure(0, weight=0)
+        running_frame.rowconfigure(1, weight=1)
 
         running_box = ttk.LabelFrame(running_frame, text="Running Count", padding=8)
-        running_box.grid(row=0, column=0, sticky="nsew")
+        running_box.grid(row=0, column=0, sticky="new")
         ttk.Label(running_box, textvariable=self.running_var, style="Value.TLabel", anchor="center").pack(fill="x")
 
         for column in range(len(self.CARD_VALUES)):
-            bottom_panel.columnconfigure(column, weight=1, uniform="cards")
+            bottom_panel.columnconfigure(column, weight=1, uniform="cards", minsize=64)
         bottom_panel.rowconfigure(0, weight=1)
 
         cards = list(self.CARD_VALUES.items())
@@ -149,6 +155,14 @@ class WongHalvesFrame(BaseModeFrame):
                 style="Card.TButton",
                 command=lambda c=card, v=value: self._record_card(c, v),
             ).grid(row=0, column=index, padx=2, pady=2, sticky="nsew")
+
+    def _update_history_column_minsize(self, event: tk.Event) -> None:
+        """Allow the history panel to shrink down to the true-count width."""
+
+        if self._history_column_manager is None:
+            return
+        width = max(1, event.width)
+        self._history_column_manager.columnconfigure(self._history_column_index, minsize=width)
 
     def _record_card(self, card: str, value: float) -> None:
         """Log the fractional Wong Halves value for the chosen card rank."""
@@ -213,15 +227,15 @@ class WongHalvesFrame(BaseModeFrame):
             justify="left",
         ).grid(row=0, column=0, sticky="w")
 
-        actions = ttk.LabelFrame(container, text="Actions", padding=10)
+        actions = ttk.LabelFrame(container, text="Other Controls", padding=10)
         actions.grid(row=1, column=0, sticky="ew", pady=(12, 12))
         actions.columnconfigure(0, weight=1)
 
         ttk.Label(
             actions,
             text=(
-                "Undo: <, ,, Ctrl+Z\n"
-                "Redo: >, ., Ctrl+Shift+Z\n"
+                "Undo: < or Ctrl+Z\n"
+                "Redo: > or Ctrl+Y\n"
                 "Reset Shoe: Ctrl+R"
             ),
             justify="left",
