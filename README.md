@@ -18,24 +18,8 @@ A lightweight desktop helper that lets you practice and run two common blackjack
 
 ## Running the app
 1. Ensure you have Python 3.9+ installed on Windows (https://www.python.org/downloads/).
-2. From this project folder run:
-   `powershell
-   python main.py
-   `
-   The counter opens in a new window.
+2. Run .exe in dist folder (exe made possible using PyInstaller)
 
-## Building a standalone .exe
-The app has no external dependencies beyond the standard library, so you can bundle it with [PyInstaller](https://pyinstaller.org/en/stable/).
-
-1. Install PyInstaller (one time):
-   `powershell
-   pip install pyinstaller
-   `
-2. Build the packaged executable with the provided spec (adds the icon and friendly file name):
-   `powershell
-   pyinstaller main.spec
-   `
-3. Your distributable executable will be under dist\Blackjack Counter.exe. Share that file with friends; they will not need Python installed.
 
 If you need to tweak the packaging further, edit main.spec to match your preferences.
 

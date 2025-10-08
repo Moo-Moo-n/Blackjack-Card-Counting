@@ -19,11 +19,15 @@ class CountingApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("Blackjack Counter")
-        self.geometry("1100x640")
+        self.geometry("1231x294")
+        self.minsize(620, 160)
+        self._base_window_size = (1231, 294)
+        self._current_font_scale = 1.0
 
         self._icon_image: Optional[tk.PhotoImage] = None
         self._apply_icon()
         self._init_style()
+        self._configure_responsive_fonts()
 
         container = ttk.Frame(self)
         container.pack(fill="both", expand=True)
@@ -41,11 +45,55 @@ class CountingApp(tk.Tk):
 
     def _init_style(self) -> None:
         style = ttk.Style(self)
-        style.configure("Headline.TLabel", font=("Segoe UI", 24, "bold"))
-        style.configure("Subheadline.TLabel", font=("Segoe UI", 16))
-        style.configure("Value.TLabel", font=("Segoe UI", 18, "bold"))
-        style.configure("Caption.TLabel", font=("Segoe UI", 10))
-        style.configure("Card.TButton", padding=(6, 4))
+        self._base_fonts = {
+            "Headline.TLabel": ("Segoe UI", 24, "bold"),
+            "Subheadline.TLabel": ("Segoe UI", 16),
+            "Value.TLabel": ("Segoe UI", 18, "bold"),
+            "Caption.TLabel": ("Segoe UI", 10),
+            "TButton": ("Segoe UI", 11),
+            "Card.TButton": ("Segoe UI", 12),
+        }
+        self._base_paddings = {
+            "TButton": (6, 4),
+            "Card.TButton": (6, 4),
+        }
+
+        for style_name, font_spec in self._base_fonts.items():
+            style.configure(style_name, font=font_spec)
+
+        for style_name, padding in self._base_paddings.items():
+            style.configure(style_name, padding=padding)
+
+    def _configure_responsive_fonts(self) -> None:
+        self.bind("<Configure>", self._on_main_configure, add="+")
+
+    def _on_main_configure(self, event: tk.Event) -> None:
+        if event.widget is not self:
+            return
+
+        width = max(1, event.width)
+        height = max(1, event.height)
+        base_width, base_height = self._base_window_size
+        scale = min(width / base_width, height / base_height)
+        scale = max(0.7, min(1.0, scale))
+        if abs(scale - self._current_font_scale) < 0.02:
+            return
+
+        self._current_font_scale = scale
+        self._apply_font_scale(scale)
+
+    def _apply_font_scale(self, scale: float) -> None:
+        style = ttk.Style(self)
+        for style_name, font_spec in self._base_fonts.items():
+            family = font_spec[0]
+            size = font_spec[1]
+            extras = font_spec[2:]
+            new_size = max(8, round(size * scale))
+            style.configure(style_name, font=(family, new_size, *extras))
+
+        for style_name, padding in self._base_paddings.items():
+            scaled_padding = tuple(max(2, round(value * scale)) for value in padding)
+            style.configure(style_name, padding=scaled_padding)
 
     def show_frame(self, name: str) -> None:
         frame = self.frames[name]

@@ -180,7 +180,13 @@ class BaseModeFrame(ttk.Frame):
         self._bind_shortcut("<Control-r>", _wrap(self._reset_shoe))
         for sequence in ("<less>", "<KeyPress-comma>", "<Control-z>"):
             self._bind_shortcut(sequence, _wrap(self._undo_entry))
-        for sequence in ("<greater>", "<KeyPress-period>", "<Control-Shift-Z>"):
+        for sequence in (
+            "<greater>",
+            "<KeyPress-period>",
+            "<Control-Shift-Z>",
+            "<Control-y>",
+            "<Control-Y>",
+        ):
             self._bind_shortcut(sequence, _wrap(self._redo_entry))
 
     def on_hide(self) -> None:
